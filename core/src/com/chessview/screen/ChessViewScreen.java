@@ -1,66 +1,89 @@
 package com.chessview.screen;
 
+import java.util.ArrayDeque;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.chessview.ChessView;
 import com.chessview.data.DataRetrieval;
 import com.chessview.graph.GraphSquare;
+import com.chessview.graph.GraphSquareChild;
 import com.chessview.region.ROI;
 
 public class ChessViewScreen extends AbstractScreen implements InputProcessor {
 
+	
+	/*
+	 * Game tree graph variables
+	 */
+	
+	/// Root node of the graph. Initial board state.
 	private final GraphSquare kRootNode;
 	
-	private GraphSquare current_node_;
+	/// The full move list taken in the current path - used as a stack
+	private ArrayDeque<GraphSquare> game_path_;
 	
-	public static final Rectangle kDrawableRegion = new Rectangle(-AbstractScreen.kVirtualWidth/2+2, -AbstractScreen.kVirtualHeight/2+2, 
-			  AbstractScreen.kVirtualWidth-4, AbstractScreen.kVirtualHeight-4 );
+	/// Initial board state
+	private static final String kInitialFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 	
+	/*
+	 * UI variables
+	 */
+	/// Drawable area of the screen	
+	public static final Rectangle kDrawableRegion = new Rectangle(-AbstractScreen.kVirtualHeight/2+2, -AbstractScreen.kVirtualHeight/2+2, 
+			  AbstractScreen.kVirtualHeight-4, AbstractScreen.kVirtualHeight-4 );
+	
+	/// The region of the current node that is being viewed
 	private ROI region_of_interest_;
 	
-	private DataRetrieval data_retreiver;
 	
+	/*
+	 * Data generation
+	 */
+	/// Handles all data retrieval. Run as a separate thread.
+	private DataRetrieval data_retreiver;
 	
 	public ChessViewScreen(ChessView kApplication) {
 		super(kApplication);
 		
-
 		this.data_retreiver = new DataRetrieval();
-		(new Thread(this.data_retreiver)).start();
-		
-		kRootNode = new GraphSquare("123", data_retreiver);
-		region_of_interest_ = new ROI(ChessViewScreen.kDrawableRegion);
-
-		this.current_node_ = kRootNode;
-		
-		Gdx.input.setInputProcessor(this);
-		
-	
+		kRootNode = new GraphSquare(kInitialFen, data_retreiver);
 	}
 
 	@Override
 	public void show() {
-		 super.show();
+		super.show();
+
+		// Set up data retrieval.
+		(new Thread(this.data_retreiver)).start();
+
+		// Set up game tree
+		this.game_path_ = new ArrayDeque<GraphSquare>();
+		this.game_path_.addFirst(kRootNode);
+
+		// Set up UI
+		region_of_interest_ = new ROI(ChessViewScreen.kDrawableRegion);
+		Gdx.input.setInputProcessor(this);
 	}
 	
 	@Override
 	public void render(float delta) {
 		super.render(delta);		
 		
-		kApplication.shape_renderer().begin(ShapeType.Line); {
-					
-			GraphSquare next_node = kRootNode.render(delta, 
-					kApplication.shape_renderer(), region_of_interest_);
-			
-			if(next_node != null) {
-				this.current_node_ = next_node;
-			}
+		GraphSquareChild next_node = null;
 		
+		kApplication.shape_renderer().begin(ShapeType.Line); {			
+			next_node = game_path_.peek().render(delta, kApplication.shape_renderer(), 
+					                         region_of_interest_);		
 		} kApplication.shape_renderer().end();
+		
+		if(next_node != null) {
+			game_path_.addFirst(next_node.graph);
+			this.region_of_interest_.Reconstrain(next_node.virtual_position);
+		}
 				
 	}
 

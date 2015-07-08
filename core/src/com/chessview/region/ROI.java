@@ -50,5 +50,25 @@ public class ROI {
 		
 		return true;
 	}
+	
+	
+	// The given virtual coordinates become the absolute coords
+	public void Reconstrain(Rectangle virtual_coords) {
+		
+		float x_scale = 1/virtual_coords.width;
+		region_of_interest_.x -= virtual_coords.x;
+		region_of_interest_.x *= x_scale;
+		region_of_interest_.width *= x_scale;
+		
+		float y_scale = 1/virtual_coords.height;
+		region_of_interest_.y -= virtual_coords.y;
+		region_of_interest_.y *= y_scale;
+		region_of_interest_.height *= y_scale;
+		
+	}
+	public void Reset() {
+		this.region_of_interest_ = new Rectangle(0,0,1,1);
+		
+	}
 
 }

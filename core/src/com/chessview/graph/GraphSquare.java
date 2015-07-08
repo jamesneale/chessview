@@ -31,7 +31,7 @@ public class GraphSquare {
 	
 	
 	// called by main thread
-	public GraphSquare render(float delta, ShapeRenderer shape_renderer, ROI region) {
+	public GraphSquareChild render(float delta, ShapeRenderer shape_renderer, ROI region) {
 		if(children_ == null) {
 			if(!request_made_) {
 				if(GenerateChildren()) {
@@ -41,24 +41,23 @@ public class GraphSquare {
 			return null;
 		}			
 		
-		int render_count = 0;
-		GraphSquareChild single = null;
+		
+		GraphSquareChild last_rendered = null;
 		
 		for(GraphSquareChild child : children_) {
 			Rectangle bounding_box = GetBoundingBox(region.kBoundingBox, child.virtual_position, region.region_of_interest_);
 			
 			if(bounding_box != null) {
-				++render_count;
-				single = child;
+				last_rendered = child;
 				child.graph.render(delta, shape_renderer, bounding_box, 0);
 			}
 			
 		}
 	
-		shape_renderer.setColor(Color.WHITE);
-		shape_renderer.rect(region.kBoundingBox.x, region.kBoundingBox.y, region.kBoundingBox.width, region.kBoundingBox.height);
-		if(render_count == 1) {
-			return single.graph;
+		if(last_rendered == null) {
+			// stop zoom
+		} else if(last_rendered.virtual_position.contains(region.region_of_interest_)) {
+			return last_rendered;
 		}
 		return null;
 		
@@ -137,7 +136,7 @@ public class GraphSquare {
 		//float size = (float) Math.sqrt((double)area_per_child);
 		
 		for(int i = 0; i < children_data.size() && i < kMaxNodes; ++i) {
-			Rectangle virtual_position = new Rectangle(i%5 * size, i/5 * size, size, size);
+			Rectangle virtual_position = new Rectangle((float)Math.random()*(1f-size), (float)Math.random()*(1f-size), size, size);
 			children_.add(new GraphSquareChild(new GraphSquare(children_data.get(i), this.data_retreiver), virtual_position));
 		}
 	}
