@@ -8,8 +8,8 @@ public class AtlasBuilder {
 		Settings settings = new Settings();
 		settings.maxWidth = 2048;
 		settings.maxHeight = 2048;
-		TexturePacker.process(settings, "C:/Users/Kiuas/Pictures/solo project images", 
-				"C:/Users/Kiuas/Documents/GitHub/chessview/android/assets", "atlas");
+		TexturePacker.process(settings, "C:/Users/jneal_000/Desktop/chessview/chessview/raw", 
+				"C:/Users/jneal_000/Desktop/chessview/chessview/android/assets", "atlas");
 		System.out.println("Done!");
 	}
 }

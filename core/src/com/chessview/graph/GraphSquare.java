@@ -70,6 +70,7 @@ public abstract class GraphSquare {
 		} else if(last_rendered.virtual_position.contains(region.region_of_interest_)) {
 			return last_rendered;
 		}
+		
 		return null;
 		
 	}
@@ -106,14 +107,14 @@ public abstract class GraphSquare {
 	
 	
 	
-	private Rectangle GetBoundingBox(Rectangle original, Rectangle virtual_position) {
+	protected Rectangle GetBoundingBox(Rectangle original, Rectangle virtual_position) {
 		return new Rectangle(original.x + virtual_position.x*original.width,
 							 original.y + virtual_position.y*original.height,
 							 original.width*virtual_position.width,
 							 original.height*virtual_position.height);
 	}
 	
-	private Rectangle GetBoundingBox(Rectangle original, Rectangle virtual_position, Rectangle region) {
+	protected Rectangle GetBoundingBox(Rectangle original, Rectangle virtual_position, Rectangle region) {
 		if(!region.overlaps(virtual_position)) {
 			return null;
 		}

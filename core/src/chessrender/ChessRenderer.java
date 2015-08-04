@@ -1,4 +1,7 @@
 package chessrender;
+import java.util.HashMap;
+
+import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -13,20 +16,40 @@ public class ChessRenderer {
 	private TextureAtlas atlas_;
 	
 	private TextureRegion chessBoard_;
-	private TextureRegion[] blackPieces_;
-	private TextureRegion[] whitePieces_;
+	private TextureRegion[] black_pieces_;
+	private TextureRegion[] white_pieces_;
+	
+	private HashMap<String, Pixmap> pixmaps;
 	
 	public ChessRenderer(TextureAtlas atlas, SpriteBatch sprite_batch) {
 		this.atlas_ = atlas;
 		this.sprite_batch_ = sprite_batch;
 		
 		this.chessBoard_ = atlas_.findRegion("chessboard");
+		
+		black_pieces_ = new TextureRegion[6];
+		white_pieces_ = new TextureRegion[6];
+		
+		black_pieces_[0] = atlas.findRegion("black_pawn");
+		black_pieces_[1] = atlas.findRegion("black_rook");
+		black_pieces_[2] = atlas.findRegion("black_knight");
+		black_pieces_[3] = atlas.findRegion("black_bishop");
+		black_pieces_[4] = atlas.findRegion("black_king");
+		black_pieces_[5] = atlas.findRegion("black_queen");
+		
+		white_pieces_[0] = atlas.findRegion("white_pawn");
+		white_pieces_[1] = atlas.findRegion("white_rook");
+		white_pieces_[2] = atlas.findRegion("white_knight");
+		white_pieces_[3] = atlas.findRegion("white_bishop");
+		white_pieces_[4] = atlas.findRegion("white_king");
+		white_pieces_[5] = atlas.findRegion("white_queen");
+		
+		pixmaps = new HashMap<String, Pixmap>();
 	}
 	
 	
-	public void RenderChessBoard(String fen, Rectangle inside) {
-		
-		sprite_batch_.draw(chessBoard_, inside.x+inside.width/4, inside.y+inside.height/4, inside.width/2, inside.height/2);
+	public void RenderChessBoard(String fen, Rectangle inside) {		
+		sprite_batch_.draw(chessBoard_, inside.x, inside.y, inside.width, inside.height);
 	}
 	
 	public void begin() {
@@ -36,22 +59,4 @@ public class ChessRenderer {
 		this.sprite_batch_.end();
 	}
 	
-	public void RenderChessBoard(String fen, Vector2 position, float scale) {
-		
-		sprite_batch_.draw(chessBoard_, position.x, position.y, 0, 0, chessBoard_.getRegionWidth(), 
-				chessBoard_.getRegionHeight(), scale, scale, 0);
-		
-		int boardIndex = 0;
-		/*
-		for(int i = 0; i < fen.length(); ++i) {
-			if(fen.charAt(i) == ' ') {
-				return;
-			} else if(fen.charAt(i) == '/') {
-			} else if(Character.isDigit(fen.charAt(i))) {
-				boardIndex += fen.charAt(i) - '0';
-			} else {
-				
-			}
-		}*/
-	}
 }

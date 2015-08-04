@@ -65,8 +65,8 @@ public class ChessViewScreen extends AbstractScreen implements InputProcessor {
 		this.data_retreiver = new DataRetrieval();
 
 		this.chessboard_renderer_ = new ChessRenderer(kApplication.atlas(), kApplication.sprite_back());
-	//	kRootNode = new ChessGraphSquare(data_retreiver, kInitialFen, this.chessboard_renderer_);
-		kRootNode = new LineGraphSquare(data_retreiver, kInitialFen, kApplication.shape_renderer());
+		kRootNode = new ChessGraphSquare(data_retreiver, kInitialFen, this.chessboard_renderer_);
+	//	kRootNode = new LineGraphSquare(data_retreiver, kInitialFen, kApplication.shape_renderer());
 	}
 
 	@Override
@@ -92,12 +92,12 @@ public class ChessViewScreen extends AbstractScreen implements InputProcessor {
 		
 		GraphSquareChild next_node = null;
 		
-		//this.chessboard_renderer_.begin(); {		
-		kApplication.shape_renderer().begin(ShapeType.Line); {
+		this.chessboard_renderer_.begin(); {		
+		//kApplication.shape_renderer().begin(ShapeType.Line); {
 			next_node = game_path_.peek().render(region_of_interest_);	
 		} 
-		kApplication.shape_renderer().end();
-		//this.chessboard_renderer_.end();
+		//kApplication.shape_renderer().end();
+		this.chessboard_renderer_.end();
 		
 		kApplication.sprite_back().begin(); {
 			kApplication.sprite_back().draw(overlay, -AbstractScreen.kVirtualWidth/2, -AbstractScreen.kVirtualHeight/2);

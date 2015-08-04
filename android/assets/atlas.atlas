@@ -4,23 +4,100 @@ size: 2048,2048
 format: RGBA8888
 filter: Nearest,Nearest
 repeat: none
+black_bishop
+  rotate: false
+  xy: 1924, 1726
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: -1
+black_king
+  rotate: false
+  xy: 2, 130
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: -1
+black_knight
+  rotate: false
+  xy: 516, 644
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: -1
+black_pawn
+  rotate: false
+  xy: 1924, 1660
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: -1
+black_queen
+  rotate: false
+  xy: 1924, 1598
+  size: 64, 60
+  orig: 64, 60
+  offset: 0, 0
+  index: -1
+black_rook
+  rotate: false
+  xy: 2, 64
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: -1
 chessboard
   rotate: false
-  xy: 2, 2
+  xy: 2, 196
   size: 512, 512
   orig: 512, 512
   offset: 0, 0
   index: -1
 overlay
   rotate: false
-  xy: 2, 516
+  xy: 2, 710
   size: 1920, 1080
   orig: 1920, 1080
   offset: 0, 0
   index: -1
-whitequeen
+white_bishop
   rotate: false
-  xy: 1924, 1532
+  xy: 68, 130
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: -1
+white_king
+  rotate: false
+  xy: 2, 2
+  size: 64, 60
+  orig: 64, 60
+  offset: 0, 0
+  index: -1
+white_knight
+  rotate: false
+  xy: 516, 578
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: -1
+white_pawn
+  rotate: false
+  xy: 68, 68
+  size: 64, 60
+  orig: 64, 60
+  offset: 0, 0
+  index: -1
+white_queen
+  rotate: false
+  xy: 134, 134
+  size: 64, 60
+  orig: 64, 60
+  offset: 0, 0
+  index: -1
+white_rook
+  rotate: false
+  xy: 582, 644
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
