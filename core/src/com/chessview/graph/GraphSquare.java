@@ -2,36 +2,46 @@ package com.chessview.graph;
 
 import java.util.ArrayList;
 
-import com.badlogic.gdx.graphics.Color;
+import chessrender.ChessRenderer;
+
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
 import com.chessview.data.DataRequest;
 import com.chessview.data.DataRetrieval;
 import com.chessview.region.ROI;
 import com.chessview.screen.ChessViewScreen;
 
-public class GraphSquare {
+public abstract class GraphSquare {
+	public static float minSize = 10;
 	
-	public static final float kMinBounding = 10;
+	/// True iff this GraphSquare has requested its children be generated
+	private boolean request_made_;
 	
+	/// The children on this node from 0+
+	private ArrayList<GraphSquareChild> children_;
+	protected DataRetrieval data_retreiver;
+	
+	///
 	public final String kNodeData;
 	
-	private boolean request_made_;
-	private ArrayList<GraphSquareChild> children_;
 	
-	private DataRetrieval data_retreiver;
-	
-	public GraphSquare(String node_data, DataRetrieval data_retreiver) {
-		kNodeData = node_data;
+	public GraphSquare(DataRetrieval data_retreiver, String node_data) {
 		this.data_retreiver = data_retreiver;
 		
 		this.children_ = null;
 		this.request_made_ = false;
+		
+		this.kNodeData = node_data;
 	}
 	
+	protected abstract void render_node(Rectangle drawable_region);
+	protected abstract void render_node(ROI region);
+	
+	protected abstract GraphSquareChild make_child(String node_data, Rectangle virtual_position);
 	
 	// called by main thread
-	public GraphSquareChild render(float delta, ShapeRenderer shape_renderer, ROI region) {
+	public GraphSquareChild render(ROI region) {
 		if(children_ == null) {
 			if(!request_made_) {
 				if(GenerateChildren()) {
@@ -40,8 +50,7 @@ public class GraphSquare {
 			}
 			return null;
 		}			
-		
-		
+				
 		GraphSquareChild last_rendered = null;
 		
 		for(GraphSquareChild child : children_) {
@@ -49,13 +58,15 @@ public class GraphSquare {
 			
 			if(bounding_box != null) {
 				last_rendered = child;
-				child.graph.render(delta, shape_renderer, bounding_box, 0);
+				child.graph.render(bounding_box, 0);
 			}
-			
 		}
 	
+		
+		this.render_node(region);
+		
 		if(last_rendered == null) {
-			// stop zoom
+			region.ZoomInLimit();
 		} else if(last_rendered.virtual_position.contains(region.region_of_interest_)) {
 			return last_rendered;
 		}
@@ -64,7 +75,7 @@ public class GraphSquare {
 	}
 	
 	//called by parent
-	private void render(float delta, ShapeRenderer shape_renderer, Rectangle bounding_box, int depth) {
+	private void render(Rectangle bounding_box, int depth) {
 		
 		// Check inside drawable region
 		if(!bounding_box.overlaps(ChessViewScreen.kDrawableRegion)) {
@@ -72,7 +83,7 @@ public class GraphSquare {
 		}
 		
 		// Check large enough to draw children
-		if(bounding_box.width > kMinBounding) {
+		if(bounding_box.width > minSize) {
 			
 			if(children_ == null) {
 				if(!request_made_) {
@@ -84,15 +95,11 @@ public class GraphSquare {
 			}	
 			
 			for(GraphSquareChild child : children_) {	
-				child.graph.render(delta, shape_renderer, GetBoundingBox(bounding_box, child.virtual_position), depth+1);
+				child.graph.render(GetBoundingBox(bounding_box, child.virtual_position), depth+1);
 			}
 		}
 		
-		// draw ourselves
-		float color = Math.max(0.2f, 1 - depth*0.2f);
-		shape_renderer.setColor(color, color, color, 1);
-		shape_renderer.rect(bounding_box.x, bounding_box.y, bounding_box.width, bounding_box.height);
-		
+		this.render_node(bounding_box);
 	}
 	
 	
@@ -137,7 +144,7 @@ public class GraphSquare {
 		
 		for(int i = 0; i < children_data.size() && i < kMaxNodes; ++i) {
 			Rectangle virtual_position = new Rectangle((float)Math.random()*(1f-size), (float)Math.random()*(1f-size), size, size);
-			children_.add(new GraphSquareChild(new GraphSquare(children_data.get(i), this.data_retreiver), virtual_position));
+			children_.add(make_child(children_data.get(i), virtual_position));
 		}
 	}
 }

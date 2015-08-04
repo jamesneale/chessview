@@ -51,12 +51,15 @@ public abstract class AbstractScreen implements Screen {
 	
 	@Override
 	public void render(float delta) {		
+
+		camera_.update();
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 	}
 	
 	@Override
 	public void show() {
 		kApplication.shape_renderer().setProjectionMatrix(camera_.combined);
+		kApplication.sprite_back().setProjectionMatrix(camera_.combined);
 	}
 	
 	

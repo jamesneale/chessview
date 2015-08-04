@@ -1,19 +1,25 @@
 package com.chessview;
 
 import com.badlogic.gdx.Game;
-import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Vector3;
-import com.chessview.screen.AbstractScreen;
 import com.chessview.screen.ChessViewScreen;
 
 public class ChessView extends Game {
 	
 	private ShapeRenderer shape_renderer_;
+	private SpriteBatch sprite_batch_;
+	private TextureAtlas atlas_;
 	
 	@Override
-	public void create () {
+	public void create() {
 		this.shape_renderer_ = new ShapeRenderer();
+		this.sprite_batch_ = new SpriteBatch();
+		
+		this.atlas_ = new TextureAtlas(Gdx.files.internal("atlas.atlas"));
 		
 		this.setScreen(new ChessViewScreen(this));
 	}
@@ -22,7 +28,12 @@ public class ChessView extends Game {
 		return this.shape_renderer_;
 	}
 	
-	public void unproject(Vector3 screen_coord) {
-		
+	public SpriteBatch sprite_back() {
+		return this.sprite_batch_;
 	}
+	
+	public TextureAtlas atlas() {
+		return this.atlas_;
+	}
+	
 }

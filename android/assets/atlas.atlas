@@ -1,0 +1,27 @@
+
+atlas.png
+size: 2048,2048
+format: RGBA8888
+filter: Nearest,Nearest
+repeat: none
+chessboard
+  rotate: false
+  xy: 2, 2
+  size: 512, 512
+  orig: 512, 512
+  offset: 0, 0
+  index: -1
+overlay
+  rotate: false
+  xy: 2, 516
+  size: 1920, 1080
+  orig: 1920, 1080
+  offset: 0, 0
+  index: -1
+whitequeen
+  rotate: false
+  xy: 1924, 1532
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: -1

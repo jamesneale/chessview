@@ -2,8 +2,11 @@ package com.chessview.screen;
 
 import java.util.ArrayDeque;
 
+import chessrender.ChessRenderer;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
@@ -11,6 +14,8 @@ import com.chessview.ChessView;
 import com.chessview.data.DataRetrieval;
 import com.chessview.graph.GraphSquare;
 import com.chessview.graph.GraphSquareChild;
+import com.chessview.graph.chess.ChessGraphSquare;
+import com.chessview.graph.chess.LineGraphSquare;
 import com.chessview.region.ROI;
 
 public class ChessViewScreen extends AbstractScreen implements InputProcessor {
@@ -27,17 +32,22 @@ public class ChessViewScreen extends AbstractScreen implements InputProcessor {
 	private ArrayDeque<GraphSquare> game_path_;
 	
 	/// Initial board state
-	private static final String kInitialFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 	
 	/*
 	 * UI variables
 	 */
 	/// Drawable area of the screen	
-	public static final Rectangle kDrawableRegion = new Rectangle(-AbstractScreen.kVirtualHeight/2+2, -AbstractScreen.kVirtualHeight/2+2, 
-			  AbstractScreen.kVirtualHeight-4, AbstractScreen.kVirtualHeight-4 );
+	public static final Rectangle kDrawableRegion = new Rectangle(-AbstractScreen.kVirtualHeight/2, -AbstractScreen.kVirtualHeight/2, 
+			  AbstractScreen.kVirtualHeight, AbstractScreen.kVirtualHeight);
 	
 	/// The region of the current node that is being viewed
 	private ROI region_of_interest_;
+	
+	/// Handles the drawing of chessboards
+	private ChessRenderer chessboard_renderer_;
+	
+	/// UI overlay
+	private TextureRegion overlay;
 	
 	
 	/*
@@ -46,11 +56,17 @@ public class ChessViewScreen extends AbstractScreen implements InputProcessor {
 	/// Handles all data retrieval. Run as a separate thread.
 	private DataRetrieval data_retreiver;
 	
+	/// FEN representation of the starting board
+	private final String kInitialFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+	
 	public ChessViewScreen(ChessView kApplication) {
 		super(kApplication);
 		
 		this.data_retreiver = new DataRetrieval();
-		kRootNode = new GraphSquare(kInitialFen, data_retreiver);
+
+		this.chessboard_renderer_ = new ChessRenderer(kApplication.atlas(), kApplication.sprite_back());
+	//	kRootNode = new ChessGraphSquare(data_retreiver, kInitialFen, this.chessboard_renderer_);
+		kRootNode = new LineGraphSquare(data_retreiver, kInitialFen, kApplication.shape_renderer());
 	}
 
 	@Override
@@ -65,6 +81,7 @@ public class ChessViewScreen extends AbstractScreen implements InputProcessor {
 		this.game_path_.addFirst(kRootNode);
 
 		// Set up UI
+		this.overlay = kApplication.atlas().findRegion("overlay");
 		region_of_interest_ = new ROI(ChessViewScreen.kDrawableRegion);
 		Gdx.input.setInputProcessor(this);
 	}
@@ -75,10 +92,19 @@ public class ChessViewScreen extends AbstractScreen implements InputProcessor {
 		
 		GraphSquareChild next_node = null;
 		
-		kApplication.shape_renderer().begin(ShapeType.Line); {			
-			next_node = game_path_.peek().render(delta, kApplication.shape_renderer(), 
-					                         region_of_interest_);		
-		} kApplication.shape_renderer().end();
+		//this.chessboard_renderer_.begin(); {		
+		kApplication.shape_renderer().begin(ShapeType.Line); {
+			next_node = game_path_.peek().render(region_of_interest_);	
+		} 
+		kApplication.shape_renderer().end();
+		//this.chessboard_renderer_.end();
+		
+		kApplication.sprite_back().begin(); {
+			kApplication.sprite_back().draw(overlay, -AbstractScreen.kVirtualWidth/2, -AbstractScreen.kVirtualHeight/2);
+		}
+		kApplication.sprite_back().end();
+		
+		
 		
 		if(next_node != null) {
 			game_path_.addFirst(next_node.graph);
