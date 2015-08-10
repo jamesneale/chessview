@@ -1,14 +1,13 @@
 package com.chessview.graph;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-import chessrender.ChessRenderer;
-
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.math.Vector2;
 import com.chessview.data.DataRequest;
 import com.chessview.data.DataRetrieval;
+import com.chessview.graph.layout.GridLayoutManager;
 import com.chessview.region.ROI;
 import com.chessview.screen.ChessViewScreen;
 
@@ -19,7 +18,7 @@ public abstract class GraphSquare {
 	private boolean request_made_;
 	
 	/// The children on this node from 0+
-	private ArrayList<GraphSquareChild> children_;
+	private volatile List<GraphSquareChild> children_;
 	protected DataRetrieval data_retreiver;
 	
 	///
@@ -133,19 +132,18 @@ public abstract class GraphSquare {
 	}
 
 
-	public synchronized void AddChildren(ArrayList<String> children_data) {
+	public void AddChildren(ArrayList<String> children_data) {
 		if(this.children_ != null) {
 			return;
 		}
-		children_ = new ArrayList<GraphSquareChild>();
+		ArrayList<GraphSquareChild> new_children = new ArrayList<GraphSquareChild>();
 		
-		float size = 0.2f;
-		// float area_per_child = 1 / (children_data.size()*2f);	
-		//float size = (float) Math.sqrt((double)area_per_child);
+		GridLayoutManager layout_manager = new GridLayoutManager(children_data.size());
 		
 		for(int i = 0; i < children_data.size() && i < kMaxNodes; ++i) {
-			Rectangle virtual_position = new Rectangle((float)Math.random()*(1f-size), (float)Math.random()*(1f-size), size, size);
-			children_.add(make_child(children_data.get(i), virtual_position));
+			new_children.add(make_child(children_data.get(i), layout_manager.GetNext()));
 		}
+		
+		this.children_ = new_children;
 	}
 }

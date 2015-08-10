@@ -3,6 +3,8 @@ package com.chessview.data;
 import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 
+import com.generator.Position;
+
 public class DataRetrieval implements Runnable{
 	
 	public ArrayBlockingQueue<DataRequest> data_requests_;
@@ -13,14 +15,7 @@ public class DataRetrieval implements Runnable{
 	
 
 	private static ArrayList<String> GenerateNodes(String node_data) {
-		ArrayList<String> nodes = new ArrayList<String>();
-		
-		int max = 4;
-		for(int i = 0; i < max; ++i) {
-			nodes.add("Hello" + i);
-		}
-		
-		return nodes;
+		return Position.GenerateMovesFrom(node_data.split(":")[0]);
 	}
 
 
@@ -35,7 +30,7 @@ public class DataRetrieval implements Runnable{
 
 			
 			} catch (Exception e) {
-
+				System.out.println(e.getMessage());
 			}
 		}
 		

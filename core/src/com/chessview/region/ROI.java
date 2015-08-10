@@ -6,8 +6,14 @@ import com.badlogic.gdx.math.Rectangle;
 
 public class ROI {
 	
+	public static final Rectangle kDefaultVirtualCanvas = new Rectangle(0,0,1,1);
+	private static final float kMinROISize = 0.001f;
+	
+	
 	// higher is less sensitive
 	public static final float sensitivity = 50;
+	
+	
 	
 	public final Rectangle kBoundingBox;
 	public Rectangle region_of_interest_;
@@ -17,7 +23,7 @@ public class ROI {
 	
 	public ROI(Rectangle bounding_box) {
 		this.kBoundingBox = bounding_box;
-		this.region_of_interest_ = new Rectangle(0,0,1,1);
+		this.region_of_interest_ = new Rectangle(kDefaultVirtualCanvas);
 	
 		this.zoom_in_max_ = false;
 		this.zoom_out_max_ = true;
@@ -55,17 +61,17 @@ public class ROI {
 		if(this.zoom_in_max_) {
 			return;
 		}
-		float amountf = amount / sensitivity;
+		float amountf = region_of_interest_.width * -0.1f ;
 		
 		float bottom_weight = ((y-kBoundingBox.y)/kBoundingBox.height);
 		float left_weight = ((x-kBoundingBox.x)/kBoundingBox.width);
 		
 
 		region_of_interest_.x += -amountf*left_weight;
-		region_of_interest_.width += amountf;
+		region_of_interest_.width = Math.max(region_of_interest_.width + amountf, ROI.kMinROISize);
 		
 		region_of_interest_.y += -amountf*bottom_weight;
-		region_of_interest_.height += amountf;
+		region_of_interest_.height = region_of_interest_.width;
 		
 		zoom_out_max_ = false;
 	}
@@ -75,17 +81,17 @@ public class ROI {
 		if(this.zoom_out_max_) {
 			return;
 		}
-		float amountf = amount / sensitivity;
+		float amountf = region_of_interest_.width * 0.1f ;
 		
 		float bottom_weight = ((y-kBoundingBox.y)/kBoundingBox.height);
 		float left_weight = ((x-kBoundingBox.x)/kBoundingBox.width);
 		
 
 		region_of_interest_.x += -amountf*left_weight;
-		region_of_interest_.width += amountf;
+		region_of_interest_.width = Math.max(region_of_interest_.width + amountf, ROI.kMinROISize);
 		
 		region_of_interest_.y += -amountf*bottom_weight;
-		region_of_interest_.height += amountf;
+		region_of_interest_.height = region_of_interest_.width;
 		
 		zoom_in_max_ = false;
 	}
@@ -115,6 +121,24 @@ public class ROI {
 	}
 	public void ZoomOutLimit() {
 		this.zoom_out_max_ = true;
+	}
+
+	public void Pan(int deltaX, int deltaY) {
+		region_of_interest_.x -= deltaX / ((1.0f/region_of_interest_.width) * 1000f);
+		region_of_interest_.y += deltaY / ((1.0f/region_of_interest_.height) * 1000f);
+		
+	}
+
+	public boolean ZoomOutRequired() {
+		return !ROI.kDefaultVirtualCanvas.contains(this.region_of_interest_);
+	}
+
+	public void Deconstrain(Rectangle virtual_position) {
+		region_of_interest_.x = virtual_position.x + virtual_position.width * region_of_interest_.x;
+		region_of_interest_.y = virtual_position.y + virtual_position.height * region_of_interest_.y;
+		region_of_interest_.width = region_of_interest_.width * virtual_position.width;
+		region_of_interest_.height = virtual_position.height * region_of_interest_.height;	
+	
 	}
 
 }

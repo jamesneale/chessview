@@ -2,8 +2,15 @@
 atlas.png
 size: 2048,2048
 format: RGBA8888
-filter: Nearest,Nearest
+filter: Linear,Linear
 repeat: none
+background
+  rotate: false
+  xy: 2, 710
+  size: 1920, 1080
+  orig: 1920, 1080
+  offset: 0, 0
+  index: -1
 black_bishop
   rotate: false
   xy: 1924, 1726
@@ -20,7 +27,7 @@ black_king
   index: -1
 black_knight
   rotate: false
-  xy: 516, 644
+  xy: 1030, 644
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
@@ -53,11 +60,11 @@ chessboard
   orig: 512, 512
   offset: 0, 0
   index: -1
-overlay
+selected_chessboard
   rotate: false
-  xy: 2, 710
-  size: 1920, 1080
-  orig: 1920, 1080
+  xy: 516, 196
+  size: 512, 512
+  orig: 512, 512
   offset: 0, 0
   index: -1
 white_bishop
@@ -76,7 +83,7 @@ white_king
   index: -1
 white_knight
   rotate: false
-  xy: 516, 578
+  xy: 1030, 578
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
@@ -97,8 +104,21 @@ white_queen
   index: -1
 white_rook
   rotate: false
-  xy: 582, 644
+  xy: 1096, 644
   size: 64, 64
   orig: 64, 64
+  offset: 0, 0
+  index: -1
+
+atlas2.png
+size: 512,2048
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+overlay
+  rotate: false
+  xy: 2, 2
+  size: 300, 1080
+  orig: 300, 1080
   offset: 0, 0
   index: -1
