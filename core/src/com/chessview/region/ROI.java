@@ -42,7 +42,7 @@ public class ROI {
 		return this.kBoundingBox;
 	}
 	
-	public boolean Zoom(float x, float y, int amount) {
+	public boolean Zoom(float x, float y, float amount) {
 		
 		if(!this.kBoundingBox.contains(x,y)) {
 			return false;
@@ -57,7 +57,7 @@ public class ROI {
 		return true;
 	}
 	
-	private void ZoomIn(float x, float y, int amount) {
+	private void ZoomIn(float x, float y, float amount) {
 		if(this.zoom_in_max_) {
 			return;
 		}
@@ -77,7 +77,7 @@ public class ROI {
 	}
 	
 	// TODO fix this method to constrain zoom out
-	private void ZoomOut(float x, float y, int amount) {
+	private void ZoomOut(float x, float y, float amount) {
 		if(this.zoom_out_max_) {
 			return;
 		}
@@ -123,7 +123,7 @@ public class ROI {
 		this.zoom_out_max_ = true;
 	}
 
-	public void Pan(int deltaX, int deltaY) {
+	public void Pan(float deltaX, float deltaY) {
 		region_of_interest_.x -= deltaX / ((1.0f/region_of_interest_.width) * 1000f);
 		region_of_interest_.y += deltaY / ((1.0f/region_of_interest_.height) * 1000f);
 		

@@ -13,7 +13,6 @@ public class GameState {
 		
 	}
 	public GameState(String[] split_fen) {
-		System.out.println(split_fen[1]);
 		white_turn = split_fen[1].equals("w");
 		
 		this.castling = new boolean[4];

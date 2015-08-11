@@ -6,10 +6,14 @@ import chessrender.ChessRenderer;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.input.GestureDetector;
+import com.badlogic.gdx.input.GestureDetector.GestureListener;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.chessview.ChessView;
 import com.chessview.data.DataRetrieval;
@@ -18,7 +22,7 @@ import com.chessview.graph.GraphSquareChild;
 import com.chessview.graph.chess.ChessGraphSquare;
 import com.chessview.region.ROI;
 
-public class ChessViewScreen extends AbstractScreen implements InputProcessor {
+public class ChessViewScreen extends AbstractScreen implements GestureListener, InputProcessor {
 
 	
 	/*
@@ -48,8 +52,14 @@ public class ChessViewScreen extends AbstractScreen implements InputProcessor {
 	/// UI overlay
 	private TextureRegion overlay;
 	private Sprite background;
+	
+	// Text
 	private GlyphLayout glyph_layout;
 	private String node_count;
+	
+	// Android Zoom
+	private float previous_distance;
+	private static final float kMinForScroll = 2f;
 	
 	/*
 	 * Data generation
@@ -90,7 +100,11 @@ public class ChessViewScreen extends AbstractScreen implements InputProcessor {
 		this.background.setPosition(-kVirtualWidth/2, -kVirtualHeight/2);
 		this.overlay = kApplication.atlas().findRegion("overlay");
 		region_of_interest_ = new ROI(ChessViewScreen.kDrawableRegion);
-		Gdx.input.setInputProcessor(this);
+		if(Gdx.app.getType() == ApplicationType.Desktop) {
+			Gdx.input.setInputProcessor(this);
+		} else {
+			Gdx.input.setInputProcessor(new GestureDetector(this));
+		}
 	}
 	
 	@Override
@@ -162,7 +176,79 @@ public class ChessViewScreen extends AbstractScreen implements InputProcessor {
 	}
 
 	@Override
+	public boolean touchDown(float x, float y, int pointer, int button) {
+		return false;
+	}
+
+	@Override
+	public boolean tap(float x, float y, int count, int button) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean longPress(float x, float y) {
+		return true;
+	}
+
+	@Override
+	public boolean fling(float velocityX, float velocityY, int button) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean pan(float x, float y, float deltaX, float deltaY) {
+		region_of_interest_.Pan(deltaX, deltaY);
+		return true;
+	}
+
+	@Override
+	public boolean panStop(float x, float y, int pointer, int button) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean zoom(float initialDistance, float distance) {
+		if(distance > this.previous_distance) {
+			if(distance - this.previous_distance > kMinForScroll) {
+				
+			}
+		}
+		
+		System.out.println(initialDistance + " " + distance);
+		return true;
+	}
+
+	@Override
+	public boolean pinch(Vector2 initialPointer1, Vector2 initialPointer2,
+			Vector2 pointer1, Vector2 pointer2) {
+		return false;
+		/*
+		initialPointer1.lerp(initialPointer2, 0.5f);
+		Vector3 midpoint = new Vector3(initialPointer1.x, initialPointer2.y, 0);
+		
+		float distance = pointer1.dst2(pointer2);
+		int dir = distance > this.previous_distance?1:-1;
+		this.previous_distance = distance;
+		
+		this.unproject(midpoint);
+		System.out.println(midpoint + " " + dir);
+		return region_of_interest_.Zoom(initialPointer1.x, initialPointer1.y, dir);
+	*/
+	}
+
+
+	@Override
+	public boolean scrolled(int amount) {
+		Vector3 mouse_pos = this.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0));
+		return region_of_interest_.Zoom(mouse_pos.x, mouse_pos.y, amount*4);
+	}
+
+	@Override
 	public boolean keyDown(int keycode) {
+		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -180,8 +266,8 @@ public class ChessViewScreen extends AbstractScreen implements InputProcessor {
 
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-		// TODO Auto-generated method stub
-		return false;
+		System.out.println("touch down");
+		return true;
 	}
 
 	@Override
@@ -193,19 +279,13 @@ public class ChessViewScreen extends AbstractScreen implements InputProcessor {
 	@Override
 	public boolean touchDragged(int screenX, int screenY, int pointer) {
 		region_of_interest_.Pan(Gdx.input.getDeltaX(), Gdx.input.getDeltaY());
-		return false;
+		return true;
 	}
 
 	@Override
 	public boolean mouseMoved(int screenX, int screenY) {
 		// TODO Auto-generated method stub
 		return false;
-	}
-
-	@Override
-	public boolean scrolled(int amount) {	
-		Vector3 mouse_pos = this.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0));
-		return region_of_interest_.Zoom(mouse_pos.x, mouse_pos.y, amount*4);
 	}
 
 }
