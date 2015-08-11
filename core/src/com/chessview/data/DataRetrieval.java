@@ -7,6 +7,7 @@ import com.generator.Position;
 
 public class DataRetrieval implements Runnable{
 	
+	private long node_count;
 	public ArrayBlockingQueue<DataRequest> data_requests_;
 	
 	public DataRetrieval() {
@@ -27,13 +28,18 @@ public class DataRetrieval implements Runnable{
 				DataRequest new_request = data_requests_.take();
 				ArrayList<String> children = GenerateNodes(new_request.node_data);
 				new_request.requester.AddChildren(children);
-
+				this.node_count += children.size();
 			
 			} catch (Exception e) {
 				System.out.println(e.getMessage());
 			}
 		}
 		
+	}
+
+
+	public String getNodeCount() {
+		return this.node_count + "";
 	}
 	
 }

@@ -10,7 +10,7 @@ import com.badlogic.gdx.math.Rectangle;
 
 public class ChessRenderer {
 	
-	private static final float kMinSquareSize = 2f;
+	private static final float kMinSquareSize = 4f;
 	
 	private SpriteBatch sprite_batch_;
 	

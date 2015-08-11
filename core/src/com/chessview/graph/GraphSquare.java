@@ -12,7 +12,7 @@ import com.chessview.region.ROI;
 import com.chessview.screen.ChessViewScreen;
 
 public abstract class GraphSquare {
-	public static float minSize = 10;
+	public static float minSize = 15;
 	
 	/// True iff this GraphSquare has requested its children be generated
 	private boolean request_made_;
@@ -132,6 +132,7 @@ public abstract class GraphSquare {
 	}
 
 
+	
 	public void AddChildren(ArrayList<String> children_data) {
 		if(this.children_ != null) {
 			return;
@@ -145,5 +146,18 @@ public abstract class GraphSquare {
 		}
 		
 		this.children_ = new_children;
+	}
+
+	public void grow(int count) {
+		if(this.children_ == null) {
+			if(this.GenerateChildren()) {
+				this.request_made_ = true;
+			}
+			return;
+		}
+		
+		for(int i = 0; i < count; ++i) {
+			children_.get((int)(Math.random()*this.children_.size())).graph.grow(i);
+		}
 	}
 }

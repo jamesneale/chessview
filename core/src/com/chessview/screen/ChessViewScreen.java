@@ -6,6 +6,7 @@ import chessrender.ChessRenderer;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
@@ -47,7 +48,8 @@ public class ChessViewScreen extends AbstractScreen implements InputProcessor {
 	/// UI overlay
 	private TextureRegion overlay;
 	private Sprite background;
-	
+	private GlyphLayout glyph_layout;
+	private String node_count;
 	
 	/*
 	 * Data generation
@@ -66,7 +68,9 @@ public class ChessViewScreen extends AbstractScreen implements InputProcessor {
 
 		this.chessboard_renderer_ = new ChessRenderer(kApplication.atlas(), kApplication.sprite_back());
 		kRootNode = new ChessGraphSquare(data_retreiver, kInitialFen, this.chessboard_renderer_);
-	//	kRootNode = new LineGraphSquare(data_retreiver, kInitialFen, kApplication.shape_renderer());
+	
+		this.glyph_layout = new GlyphLayout();
+		this.node_count = "";
 	}
 
 	@Override
@@ -95,6 +99,13 @@ public class ChessViewScreen extends AbstractScreen implements InputProcessor {
 		
 		GraphSquareChild next_node = null;
 		
+		//prepare text
+		if(!this.node_count.equals(this.data_retreiver.getNodeCount())) {
+			glyph_layout.setText(this.textFont, this.node_count);
+			this.node_count = this.data_retreiver.getNodeCount();
+		}
+		
+		
 		kApplication.sprite_back().begin(); {
 			this.background.draw(kApplication.sprite_back());
 		}
@@ -109,6 +120,8 @@ public class ChessViewScreen extends AbstractScreen implements InputProcessor {
 		
 		kApplication.sprite_back().begin(); {
 			kApplication.sprite_back().draw(overlay, -AbstractScreen.kVirtualWidth/2, -AbstractScreen.kVirtualHeight/2);
+			this.textFont.draw(kApplication.sprite_back(), this.glyph_layout, -720-this.glyph_layout.width, -365);
+			
 		}
 		kApplication.sprite_back().end();
 		
@@ -120,6 +133,7 @@ public class ChessViewScreen extends AbstractScreen implements InputProcessor {
 			next_node = game_path_.pop();
 			this.region_of_interest_.Deconstrain(next_node.virtual_position);
 		}
+		
 		
 	}
 
