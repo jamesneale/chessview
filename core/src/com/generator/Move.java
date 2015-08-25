@@ -15,6 +15,11 @@ public class Move {
 		this.taken_piece = tp;
 	}
 	
+	public Move clone() {
+		return new Move(this.start_row, this.start_col, this.end_row, this.end_col,
+				this.moved_piece, this.taken_piece);
+	}
+	
 	public void updateGameState(GameState gs) {
 		gs.white_turn = !gs.white_turn;
 	}

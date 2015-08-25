@@ -2,8 +2,6 @@ package com.chessview.screen;
 
 import java.util.ArrayDeque;
 
-import chessrender.ChessRenderer;
-
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Application.ApplicationType;
@@ -15,6 +13,7 @@ import com.badlogic.gdx.input.GestureDetector.GestureListener;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.chessrender.ChessRenderer;
 import com.chessview.ChessView;
 import com.chessview.data.DataRetrieval;
 import com.chessview.graph.GraphSquare;

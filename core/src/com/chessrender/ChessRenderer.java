@@ -1,4 +1,4 @@
-package chessrender;
+package com.chessrender;
 import java.util.HashMap;
 
 import com.badlogic.gdx.graphics.Pixmap;

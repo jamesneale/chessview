@@ -1,9 +1,8 @@
 package com.chessview.graph.chess;
 
-import chessrender.ChessBoard;
-import chessrender.ChessRenderer;
-
 import com.badlogic.gdx.math.Rectangle;
+import com.chessrender.ChessBoard;
+import com.chessrender.ChessRenderer;
 import com.chessview.data.DataRetrieval;
 import com.chessview.graph.GraphSquare;
 import com.chessview.graph.GraphSquareChild;

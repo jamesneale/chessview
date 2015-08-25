@@ -1,4 +1,4 @@
-package chessrender;
+package com.chessrender;
 
 
 public class Piece {

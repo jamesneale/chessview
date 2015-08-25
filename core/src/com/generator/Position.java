@@ -1,6 +1,8 @@
 package com.generator;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 
 public class Position {
 	
@@ -21,6 +23,41 @@ public class Position {
 		previous_move = null;
 	}
 	
+	public Position(Position copy) {
+		pieces = new char[8][8];
+		
+		for(int i = 0; i < copy.pieces.length;++i) {
+			for(int j = 0; j < copy.pieces[i].length; ++j) {
+				pieces[i][j] = copy.pieces[i][j];
+			}
+		}
+		
+		gs = copy.gs.clone();
+		previous_move = copy.previous_move.clone();
+		previous_gs = copy.previous_gs.clone();
+	}
+	
+
+	private static char[][] GetPieces(String FEN_pieces) {
+		int row = 0;
+		int col = 0;
+		
+		char[][] pieces = new char[8][8];
+		
+		for(int i = 0; i < FEN_pieces.length();++i) {
+			if(FEN_pieces.charAt(i) == '/') {
+				++row;
+				col = 0;
+			} else if(Character.isDigit(FEN_pieces.charAt(i))) {
+				col += FEN_pieces.charAt(i) - '0';
+			} else {
+				pieces[row][col] = FEN_pieces.charAt(i);
+				++col;
+			}
+		}
+		return pieces;
+	}
+	
 	public static ArrayList<String> GenerateMovesFrom(String FEN) {
 		Position position = new Position(FEN);
 		
@@ -32,6 +69,22 @@ public class Position {
 			if(position.attemptMove(move)) {
 				validated_moves.add(position.toFEN() + ":" + move.toString());
 				position.undoLastMove();
+			}
+		}
+		
+		return validated_moves;
+	}
+	
+	public static ArrayList<Position> GenerateMovesFrom(Position pos) {
+
+		ArrayList<Position> validated_moves = new ArrayList<Position>();
+		
+		ArrayList<Move> PLmoves = pos.generatePLMoves();
+		
+		for(Move move : PLmoves) {
+			if(pos.attemptMove(move)) {
+				validated_moves.add(new Position(pos));
+				pos.undoLastMove();
 			}
 		}
 		
@@ -250,29 +303,50 @@ public class Position {
 		return FEN;
 	}
 	
-	private static char[][] GetPieces(String FEN_pieces) {
-		int row = 0;
-		int col = 0;
+	
+	public static String perftSlow(int depth, String startPosition) {
+		Deque<String> positions = new ArrayDeque<String>();
+		positions.add(startPosition);
 		
-		char[][] pieces = new char[8][8];
+		long startTime = System.nanoTime();
 		
-		for(int i = 0; i < FEN_pieces.length();++i) {
-			if(FEN_pieces.charAt(i) == '/') {
-				++row;
-				col = 0;
-			} else if(Character.isDigit(FEN_pieces.charAt(i))) {
-				col += FEN_pieces.charAt(i) - '0';
-			} else {
-				pieces[row][col] = FEN_pieces.charAt(i);
-				++col;
+		for(int i = 0; i < depth; ++i) {
+			int curLeaves = positions.size();
+			for(int j = 0; j < curLeaves; ++j) {
+				positions.addAll(Position.GenerateMovesFrom(positions.pop()));
 			}
 		}
-		return pieces;
+		
+		long endTime = System.nanoTime();
+		
+		return positions.size() + "," + (endTime-startTime)/1000000;
+	}
+	
+	public static String perft(int depth, String startPosition) {
+		Deque<Position> positions = new ArrayDeque<Position>();
+		positions.add(new Position(startPosition));
+		
+		long startTime = System.nanoTime();
+		
+		for(int i = 0; i < depth; ++i) {
+			int curLeaves = positions.size();
+			for(int j = 0; j < curLeaves; ++j) {
+				positions.addAll(Position.GenerateMovesFrom(positions.pop()));
+			}
+		}
+		
+		long endTime = System.nanoTime();
+		
+		return positions.size() + "," + (endTime-startTime)/1000000;
 	}
 	
 	public static void main(String[] args) {
-		Position pos = new Position("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2");
 		
-		System.out.println(pos.toFEN());
+		String startPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 1 2";
+		int depth = 4;
+		
+		System.out.println(perftSlow(depth, startPosition));
+		System.out.println(perft(depth, startPosition));
+		
 	}
 }
