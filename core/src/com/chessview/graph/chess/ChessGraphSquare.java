@@ -1,5 +1,7 @@
 package com.chessview.graph.chess;
 
+import java.util.ArrayList;
+
 import com.badlogic.gdx.math.Rectangle;
 import com.chessrender.ChessBoard;
 import com.chessrender.ChessRenderer;
@@ -45,4 +47,5 @@ public class ChessGraphSquare extends GraphSquare {
 		}
 	}
 
+	
 }

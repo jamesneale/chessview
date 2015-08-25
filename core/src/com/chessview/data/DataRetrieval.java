@@ -3,7 +3,7 @@ package com.chessview.data;
 import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 
-import com.generator.Position;
+import com.generator.perft.Perft;
 
 public class DataRetrieval implements Runnable{
 	
@@ -16,7 +16,8 @@ public class DataRetrieval implements Runnable{
 	
 
 	private static ArrayList<String> GenerateNodes(String node_data) {
-		return Position.GenerateMovesFrom(node_data.split(":")[0]);
+		//return Position.GenerateMovesFrom(node_data.split(":")[0]);
+		return Perft.GenerateMovesFrom(node_data.split(":")[0]);
 	}
 
 
@@ -27,7 +28,7 @@ public class DataRetrieval implements Runnable{
 			try {
 				DataRequest new_request = data_requests_.take();
 				ArrayList<String> children = GenerateNodes(new_request.node_data);
-				new_request.requester.AddChildren(children);
+				new_request.requester.AddData(children);
 				this.node_count += children.size();
 			
 			} catch (Exception e) {

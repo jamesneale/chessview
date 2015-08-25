@@ -1,4 +1,5 @@
-package com.generator;
+package com.generator.jneale;
+
 
 public class Move {
 	public int start_row, start_col;

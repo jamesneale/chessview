@@ -7,11 +7,12 @@ import java.util.List;
 import com.badlogic.gdx.math.Rectangle;
 import com.chessview.data.DataRequest;
 import com.chessview.data.DataRetrieval;
+import com.chessview.data.Requester;
 import com.chessview.graph.layout.GridLayoutManager;
 import com.chessview.region.ROI;
 import com.chessview.screen.ChessViewScreen;
 
-public abstract class GraphSquare {
+public abstract class GraphSquare implements Requester{
 	public static float minSize = 15;
 	
 	/// True iff this GraphSquare has requested its children be generated
@@ -131,9 +132,8 @@ public abstract class GraphSquare {
 		return this.data_retreiver.data_requests_.offer(new DataRequest(this, this.kNodeData));
 	}
 
-
-	
-	public void AddChildren(ArrayList<String> children_data) {
+	@Override
+	public void AddData(ArrayList<String> children_data) {
 		if(this.children_ != null) {
 			return;
 		}
@@ -145,8 +145,9 @@ public abstract class GraphSquare {
 			new_children.add(make_child(children_data.get(i), layout_manager.GetNext()));
 		}
 		
-		this.children_ = new_children;
+		this.children_ = new_children;		
 	}
+
 
 	public void grow(int count) {
 		if(this.children_ == null) {

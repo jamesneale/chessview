@@ -64,7 +64,6 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 	 * Data generation
 	 */
 	/// Handles all data retrieval. Run as a separate thread.
-	private Thread data_retrieval_thread;
 	private DataRetrieval data_retreiver;
 	
 	/// FEN representation of the starting board
@@ -87,8 +86,7 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 		super.show();
 
 		// Set up data retrieval.
-		this.data_retrieval_thread = new Thread(this.data_retreiver);
-		this.data_retrieval_thread.start();
+		new Thread(this.data_retreiver).start();
 
 		// Set up game tree
 		this.game_path_ = new ArrayDeque<GraphSquareChild>();

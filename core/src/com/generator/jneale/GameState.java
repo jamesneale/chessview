@@ -1,4 +1,4 @@
-package com.generator;
+package com.generator.jneale;
 
 public class GameState {
 	public boolean white_turn;

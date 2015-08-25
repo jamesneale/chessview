@@ -1,4 +1,4 @@
-package com.generator;
+package com.generator.jneale;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
