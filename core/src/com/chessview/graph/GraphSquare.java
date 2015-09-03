@@ -1,11 +1,9 @@
 package com.chessview.graph;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import com.badlogic.gdx.math.Rectangle;
-import com.chessview.data.DataRequest;
 import com.chessview.data.DataRetrieval;
 import com.chessview.data.Requester;
 import com.chessview.graph.layout.GridLayoutManager;
@@ -22,23 +20,17 @@ public abstract class GraphSquare implements Requester{
 	private volatile List<GraphSquareChild> children_;
 	protected DataRetrieval data_retreiver;
 	
-	///
-	public final String kNodeData;
 	
-	
-	public GraphSquare(DataRetrieval data_retreiver, String node_data) {
+	public GraphSquare(DataRetrieval data_retreiver) {
 		this.data_retreiver = data_retreiver;
 		
 		this.children_ = null;
 		this.request_made_ = false;
-		
-		this.kNodeData = node_data;
 	}
 	
 	protected abstract void render_node(Rectangle drawable_region);
 	protected abstract void render_node(ROI region);
 	
-	protected abstract GraphSquareChild make_child(String node_data, Rectangle virtual_position);
 	
 	// called by main thread
 	public GraphSquareChild render(ROI region) {
@@ -126,39 +118,40 @@ public abstract class GraphSquare implements Requester{
 							 original.height*(virtual_position.height/region.height));
 		
 	}
-	private final static int kMaxNodes = 25;
 	
-	private boolean GenerateChildren() {
-		return this.data_retreiver.data_requests_.offer(new DataRequest(this, this.kNodeData));
-	}
-
-	@Override
-	public void AddData(ArrayList<String> children_data) {
+	
+	public void AddData(ArrayList<Object> children_data) {
 		if(this.children_ != null) {
 			return;
 		}
+		
 		ArrayList<GraphSquareChild> new_children = new ArrayList<GraphSquareChild>();
 		
 		GridLayoutManager layout_manager = new GridLayoutManager(children_data.size());
 		
-		for(int i = 0; i < children_data.size() && i < kMaxNodes; ++i) {
+		for(int i = 0; i < children_data.size(); ++i) {
 			new_children.add(make_child(children_data.get(i), layout_manager.GetNext()));
 		}
 		
-		this.children_ = new_children;		
+		this.children_ = new_children;
+		
+		
 	}
 
+	protected abstract boolean GenerateChildren();
+		//;
+	protected abstract GraphSquareChild make_child(Object data, Rectangle virtual_position);
 
-	public void grow(int count) {
-		if(this.children_ == null) {
-			if(this.GenerateChildren()) {
-				this.request_made_ = true;
-			}
+	public void CullGrandChildrenExcept(Rectangle avoid) {
+		if(children_ == null) {
 			return;
 		}
-		
-		for(int i = 0; i < count; ++i) {
-			children_.get((int)(Math.random()*this.children_.size())).graph.grow(i);
+		for(GraphSquareChild gsc : children_) {
+			if(!gsc.virtual_position.equals(avoid)) {
+				gsc.graph.children_ = null;
+				gsc.graph.request_made_ = false;
+			}
 		}
 	}
+	
 }

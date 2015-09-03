@@ -3,6 +3,12 @@ package com.generator.albertoruibal.bitboard.hash;
 import com.generator.albertoruibal.bitboard.Board;
 import com.generator.albertoruibal.bitboard.bb.BitboardUtils;
 
+/**
+ * Based on the class from the Open Source engine Carballo
+ * https://github.com/albertoruibal/carballo
+ * originally written by Alberto Alonso Ruibal.
+ */
+
 public class ZobristKey {
 
 	public static final long exclusionKey = 0x5472a27925a2a2f5L;

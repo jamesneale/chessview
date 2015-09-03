@@ -1,4 +1,4 @@
-package com.chessrender;
+package com.chessrender.drawableboard;
 
 
 public class Piece {
@@ -8,6 +8,8 @@ public class Piece {
 	public static final byte BISHOP = 3;
 	public static final byte QUEEN = 4;
 	public static final byte KING = 5;
+	
+	public static final byte BLACK_OFFSET = 10;
 	
 	public byte row, col, name;
 	public boolean white;

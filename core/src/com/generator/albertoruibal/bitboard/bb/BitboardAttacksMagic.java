@@ -1,4 +1,13 @@
 package com.generator.albertoruibal.bitboard.bb;
+
+/**
+ * Based on the class from the Open Source engine Carballo
+ * https://github.com/albertoruibal/carballo
+ * originally written by Alberto Alonso Ruibal.
+ * 
+ * Modified for use in ChessViewer by James Neale 2015
+ */
+
 public class BitboardAttacksMagic extends BitboardAttacks {
 
 	public final static byte[] rookShiftBits = { //

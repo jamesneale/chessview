@@ -1,10 +1,16 @@
 package com.generator.albertoruibal.bitboard;
 
-import com.chessrender.Piece;
+import com.chessrender.drawableboard.Piece;
 import com.generator.albertoruibal.bitboard.bb.BitboardAttacks;
 import com.generator.albertoruibal.bitboard.bb.BitboardUtils;
 
 /**
+ * Based on the class from the Open Source engine Carballo
+ * https://github.com/albertoruibal/carballo
+ * originally written by Alberto Alonso Ruibal.
+ * 
+ * Modified for use in ChessViewer by James Neale 2015
+ *
  * For efficiency Moves are int, this is a static class to threat with this
  * <p>
  * Move format (18 bits):
@@ -16,7 +22,6 @@ import com.generator.albertoruibal.bitboard.bb.BitboardUtils;
  * --^ Is check (1 bit)
  * ^ Move type (2 bits)
  *
- * @author Alberto Alonso Ruibal
  */
 public class Move {
 	// Predefined moves

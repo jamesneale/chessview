@@ -3,9 +3,10 @@ package com.chessview.data;
 import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 
+import com.generator.albertoruibal.bitboard.Board;
 import com.generator.perft.Perft;
 
-public class DataRetrieval implements Runnable{
+public abstract class DataRetrieval implements Runnable{
 	
 	private long node_count;
 	public ArrayBlockingQueue<DataRequest> data_requests_;
@@ -13,13 +14,8 @@ public class DataRetrieval implements Runnable{
 	public DataRetrieval() {
 		this.data_requests_ = new ArrayBlockingQueue<DataRequest>(2000);
 	}
-	
 
-	private static ArrayList<String> GenerateNodes(String node_data) {
-		//return Position.GenerateMovesFrom(node_data.split(":")[0]);
-		return Perft.GenerateMovesFrom(node_data.split(":")[0]);
-	}
-
+	protected abstract ArrayList<Object> GenerateNodes(Object node_data);
 
 	@Override
 	public void run() {
@@ -27,9 +23,10 @@ public class DataRetrieval implements Runnable{
 
 			try {
 				DataRequest new_request = data_requests_.take();
-				ArrayList<String> children = GenerateNodes(new_request.node_data);
+				ArrayList<Object> children = GenerateNodes(new_request.node_data);
 				new_request.requester.AddData(children);
 				this.node_count += children.size();
+				
 			
 			} catch (Exception e) {
 				System.out.println(e.getMessage());

@@ -2,11 +2,11 @@ package com.chessview;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.chessview.screen.ChessViewScreen;
+import com.chessview.screen.SplashScreen;
 
 public class ChessView extends Game {
 	
@@ -16,12 +16,16 @@ public class ChessView extends Game {
 	
 	@Override
 	public void create() {
+		
+		
 		this.shape_renderer_ = new ShapeRenderer();
 		this.sprite_batch_ = new SpriteBatch();
 		
 		this.atlas_ = new TextureAtlas(Gdx.files.internal("atlas.atlas"));
 		
-		this.setScreen(new ChessViewScreen(this));
+		this.setScreen(new SplashScreen(this));
+		
+		
 	}
 
 	public ShapeRenderer shape_renderer() {

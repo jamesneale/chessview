@@ -1,11 +1,10 @@
 package com.chessview.graph.chess;
 
-import java.util.ArrayList;
-
 import com.badlogic.gdx.math.Rectangle;
-import com.chessrender.ChessBoard;
 import com.chessrender.ChessRenderer;
-import com.chessview.data.DataRetrieval;
+import com.chessrender.drawableboard.ChessBoardBitBasic;
+import com.chessview.data.BoardDataRetrieval;
+import com.chessview.data.DataRequest;
 import com.chessview.graph.GraphSquare;
 import com.chessview.graph.GraphSquareChild;
 import com.chessview.region.ROI;
@@ -13,13 +12,13 @@ import com.chessview.region.ROI;
 public class ChessGraphSquare extends GraphSquare {
 
 	private ChessRenderer cr;
-	private ChessBoard board;
+	private ChessBoardBitBasic board;
 	
 	public static final Rectangle chessboard_region = new Rectangle(0.4f, 0.35f, 0.2f, 0.3f);
 	
-	public ChessGraphSquare(DataRetrieval data_retreiver, String node_data, ChessRenderer cr) {
-		super(data_retreiver, node_data);
-		board = new ChessBoard(node_data.split(":")[0]);
+	public ChessGraphSquare(BoardDataRetrieval data_retreiver, ChessBoardBitBasic node_data, ChessRenderer cr) {
+		super(data_retreiver);
+		board = node_data;
 		this.cr = cr;
 	}
 
@@ -34,8 +33,13 @@ public class ChessGraphSquare extends GraphSquare {
 	}
 
 	@Override
-	protected GraphSquareChild make_child(String node_data, Rectangle virtual_position) {
-		return new GraphSquareChild(new ChessGraphSquare(this.data_retreiver, node_data, cr), virtual_position);
+	protected GraphSquareChild make_child(Object node_data, Rectangle virtual_position) {
+		return new GraphSquareChild(new ChessGraphSquare((BoardDataRetrieval)this.data_retreiver, (ChessBoardBitBasic)node_data, cr), virtual_position);
+	}
+	
+	@Override
+	protected boolean GenerateChildren() {
+		return this.data_retreiver.data_requests_.offer(new DataRequest(this, board));
 	}
 
 	@Override
@@ -43,9 +47,17 @@ public class ChessGraphSquare extends GraphSquare {
 		
 		Rectangle chessboard = GetBoundingBox(region.kBoundingBox, chessboard_region, region.region_of_interest_);
 		if(chessboard != null) {
-			cr.RenderSelectedChessBoard(this.board, chessboard);
+			cr.RenderChessBoardSelected(this.board, chessboard);
 		}
 	}
+	
+	
+	@Override
+	public String toString() {
+		return board.getMove();
+	}
+
+	
 
 	
 }

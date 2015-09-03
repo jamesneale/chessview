@@ -1,11 +1,13 @@
-package com.chessrender;
+package com.chessrender.drawableboard;
 
 import java.util.ArrayList;
 
-public class ChessBoard {
+import com.chessrender.ChessRenderer;
+
+public class ChessBoardBasic extends DrawableChessBoard{
 	ArrayList<Piece> pieces;
 	
-	public ChessBoard(String FEN) {
+	public ChessBoardBasic(String FEN) {
 		
 		pieces = new ArrayList<Piece>();
 		
@@ -59,12 +61,17 @@ public class ChessBoard {
 			
 		}
 	}
-	
-	public static void main(String[] args) {
-		String FEN = "R3bD/K ";
-		ChessBoard cb = new ChessBoard(FEN);
-		for(Piece p : cb.pieces) {
-			System.out.println(p.toString());
+
+	@Override
+	public void render(ChessRenderer cr, float x, float y, float square_size) {
+		for(Piece p : this.pieces) {
+			cr.getSpriteBatch().draw(p.white?cr.white_pieces_[p.name]:cr.black_pieces_[p.name], 
+					x + square_size * p.col, y + square_size * p.row, square_size, square_size);
 		}
+		
 	}
+
+
+
+	
 }

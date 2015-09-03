@@ -1,11 +1,12 @@
 package com.generator.albertoruibal.bitboard;
 
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import com.chessrender.Piece;
-import com.generator.albertoruibal.bitboard.Move;
+import com.chessrender.drawableboard.ChessBoardBitBasic;
+import com.chessrender.drawableboard.Piece;
 import com.generator.albertoruibal.bitboard.bb.AttacksInfo;
 import com.generator.albertoruibal.bitboard.bb.BitboardAttacks;
 import com.generator.albertoruibal.bitboard.bb.BitboardUtils;
@@ -13,13 +14,14 @@ import com.generator.albertoruibal.bitboard.hash.ZobristKey;
 import com.generator.albertoruibal.bitboard.movegen.LegalMoveGenerator;
 
 /**
- * Stores the position and the move history
- * TODO Other chess variants like Atomic, Suicide, etc.
- *
- * @author Alberto Alonso Ruibal
+ * Based on the class from the Open Source engine Carballo
+ * https://github.com/albertoruibal/carballo
+ * originally written by Alberto Alonso Ruibal.
+ * 
+ * Modified for use in ChessViewer by James Neale 2015
  */
 public class Board {
-	public static final int MAX_MOVES = 1024;
+	public static final int MAX_MOVES = 3;
 	public static final String FEN_START_POSITION = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 	public static final String CHESS960_START_POSITIONS[] = {"QNNRKR", "NQNRKR", "NNQRKR", "NNRQKR", "NNRKQR", "NNRKRQ", "QNRNKR", "NQRNKR", "NRQNKR", "NRNQKR", "NRNKQR", "NRNKRQ", "QNRKNR", "NQRKNR", "NRQKNR", "NRKQNR", "NRKNQR", "NRKNRQ", "QNRKRN", "NQRKRN", "NRQKRN", "NRKQRN", "NRKRQN", "NRKRNQ", "QRNNKR", "RQNNKR", "RNQNKR", "RNNQKR", "RNNKQR", "RNNKRQ", "QRNKNR", "RQNKNR", "RNQKNR", "RNKQNR", "RNKNQR", "RNKNRQ", "QRNKRN", "RQNKRN", "RNQKRN", "RNKQRN", "RNKRQN", "RNKRNQ", "QRKNNR", "RQKNNR", "RKQNNR", "RKNQNR", "RKNNQR", "RKNNRQ", "QRKNRN", "RQKNRN", "RKQNRN", "RKNQRN", "RKNRQN", "RKNRNQ", "QRKRNN", "RQKRNN", "RKQRNN", "RKRQNN", "RKRNQN", "RKRNNQ"};
 	public static final String CHESS960_START_POSITIONS_BISHOPS[] = {"BB------", "B--B----", "B----B--", "B------B", "-BB-----", "--BB----", "--B--B--", "--B----B", "-B--B---", "---BB---", "----BB--", "----B--B", "-B----B-", "---B--B-", "-----BB-", "------BB"};
@@ -110,6 +112,20 @@ public class Board {
 		sanMoves = new HashMap<Integer, String>();
 
 		bbAttacks = BitboardAttacks.getInstance();
+	}
+	
+	public Board(ChessBoardBitBasic copy) {
+		this();
+		
+		whites = copy.whites;
+		blacks = copy.blacks;
+		pawns = copy.pawns;
+		rooks = copy.rooks;
+		queens = copy.queens;
+		bishops = copy.bishops;
+		knights = copy.knights;
+		kings = copy.kings;
+		flags = copy.flags;
 	}
 
 	/**
@@ -1023,6 +1039,58 @@ public class Board {
 		generateLegalMoves();
 		System.arraycopy(legalMoves, 0, moves, 0, (legalMoveCount != -1 ? legalMoveCount : 0));
 		return legalMoveCount;
+	}
+	
+	public ArrayList<ChessBoardBitBasic> getLegalBoards() {
+		generateLegalMoves();
+		
+		ArrayList<ChessBoardBitBasic> boards = new ArrayList<ChessBoardBitBasic>();
+		if(legalMoveCount == -1) {
+			return boards;
+		}
+		for(int i = 0; i < legalMoveCount; ++i) {
+			this.doMove(this.legalMoves[i], false, false);
+			boards.add(new ChessBoardBitBasic(this, this.legalMoves[i]));
+			
+			
+			this.undoMove();
+		}
+		return boards;
+ 	}
+	
+	public void setBoard(ChessBoardBitBasic board_data) {
+		this.resetHistory();
+		whites = board_data.whites;
+		blacks = board_data.blacks;
+		pawns = board_data.pawns;
+		rooks = board_data.rooks;
+		queens = board_data.queens;
+		bishops = board_data.bishops;
+		knights = board_data.knights;
+		kings = board_data.kings;
+		flags = board_data.flags;
+		this.moveNumber = 0;
+		key[0] = 0;
+		key[1] = 1;
+		
+		sanMoves.clear();
+
+		initialMoveNumber = 0;
+		moveNumber = 0;
+		outBookMove = Integer.MAX_VALUE;
+		
+		castlingRooks[0] = board_data.castlingRooks[0];
+		castlingRooks[1] = board_data.castlingRooks[1];
+		castlingRooks[2] = board_data.castlingRooks[2];
+		castlingRooks[3] = board_data.castlingRooks[3];
+
+		// Set zobrist key and check flags
+		key = ZobristKey.getKey(this);
+		setCheckFlags();
+
+		// and save history
+		resetHistory();
+		saveHistory(0, false);
 	}
 
 	public String getSanMove(int moveNumber) {

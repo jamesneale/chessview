@@ -1,5 +1,10 @@
 package com.generator.albertoruibal.bitboard.bb;
 
+/**
+ * Based on the class from the Open Source engine Carballo
+ * https://github.com/albertoruibal/carballo
+ * originally written by Alberto Alonso Ruibal.
+ */
 public class BitboardUtils {
 	public static final long A8 = 0x8000000000000000L;
 	public static final long H1 = 0x0000000000000001L;

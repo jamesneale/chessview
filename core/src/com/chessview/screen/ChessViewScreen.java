@@ -2,9 +2,9 @@ package com.chessview.screen;
 
 import java.util.ArrayDeque;
 
+import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -14,12 +14,15 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.chessrender.ChessRenderer;
+import com.chessrender.drawableboard.ChessBoardBitBasic;
 import com.chessview.ChessView;
-import com.chessview.data.DataRetrieval;
+import com.chessview.data.BoardDataRetrieval;
 import com.chessview.graph.GraphSquare;
 import com.chessview.graph.GraphSquareChild;
 import com.chessview.graph.chess.ChessGraphSquare;
 import com.chessview.region.ROI;
+import com.generator.albertoruibal.bitboard.Board;
+import com.movelist.MoveList;
 
 public class ChessViewScreen extends AbstractScreen implements GestureListener, InputProcessor {
 
@@ -56,15 +59,20 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 	private GlyphLayout glyph_layout;
 	private String node_count;
 	
+	// Move List
+	private MoveList moveList;
+	
 	// Android Zoom
 	private float previous_distance;
 	private static final float kMinForScroll = 2f;
+	
+	int frame_count = 0;
 	
 	/*
 	 * Data generation
 	 */
 	/// Handles all data retrieval. Run as a separate thread.
-	private DataRetrieval data_retreiver;
+	private BoardDataRetrieval data_retreiver;
 	
 	/// FEN representation of the starting board
 	private final String kInitialFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -72,10 +80,13 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 	public ChessViewScreen(ChessView kApplication) {
 		super(kApplication);
 		
-		this.data_retreiver = new DataRetrieval();
+		this.data_retreiver = new BoardDataRetrieval();
+		
+		Board temp = new Board();
+		temp.setFen(kInitialFen);
 
 		this.chessboard_renderer_ = new ChessRenderer(kApplication.atlas(), kApplication.sprite_back());
-		kRootNode = new ChessGraphSquare(data_retreiver, kInitialFen, this.chessboard_renderer_);
+		kRootNode = new ChessGraphSquare(data_retreiver, new ChessBoardBitBasic(temp), this.chessboard_renderer_);
 	
 		this.glyph_layout = new GlyphLayout();
 		this.node_count = "";
@@ -102,6 +113,8 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 		} else {
 			Gdx.input.setInputProcessor(new GestureDetector(this));
 		}
+		
+		moveList = new MoveList(new Rectangle(-910, -250, 250, 620), this.textFont);
 	}
 	
 	@Override
@@ -117,20 +130,21 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 		}
 		
 		
+		
 		kApplication.sprite_back().begin(); {
 			this.background.draw(kApplication.sprite_back());
 		}
 		kApplication.sprite_back().end();
 	
 		this.chessboard_renderer_.begin(); {		
-	//	kApplication.shape_renderer().begin(ShapeType.Line); {
-			next_node = game_path_.peek().graph.render(region_of_interest_);	
+			next_node = game_path_.peek().graph.render(region_of_interest_);
 		} 
-		//kApplication.shape_renderer().end();
 		this.chessboard_renderer_.end();
 		
 		kApplication.sprite_back().begin(); {
 			kApplication.sprite_back().draw(overlay, -AbstractScreen.kVirtualWidth/2, -AbstractScreen.kVirtualHeight/2);
+		
+			this.moveList.render(kApplication.sprite_back());
 			this.textFont.draw(kApplication.sprite_back(), this.glyph_layout, -720-this.glyph_layout.width, -365);
 			
 		}
@@ -138,11 +152,21 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 		
 		
 		if(next_node != null) {
-			game_path_.addFirst(next_node);
+			if(game_path_.size() > 1) {
+				GraphSquareChild cur_top = game_path_.pop();
+				game_path_.peek().graph.CullGrandChildrenExcept(cur_top.virtual_position);
+				game_path_.push(cur_top);
+			}
+			game_path_.push(next_node);
 			this.region_of_interest_.Reconstrain(next_node.virtual_position);
+		
+			this.moveList.push(this.game_path_.peek().graph.toString());
+			
 		} else if(game_path_.size() > 1 && this.region_of_interest_.ZoomOutRequired()) {
 			next_node = game_path_.pop();
 			this.region_of_interest_.Deconstrain(next_node.virtual_position);
+			
+			this.moveList.pop();
 		}
 		
 		
@@ -174,6 +198,7 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 
 	@Override
 	public boolean touchDown(float x, float y, int pointer, int button) {
+		System.out.println(this.unproject(new Vector3(x,y,0)));
 		return false;
 	}
 
@@ -263,7 +288,6 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-		System.out.println("touch down");
 		return true;
 	}
 

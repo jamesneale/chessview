@@ -1,5 +1,11 @@
 package com.generator.albertoruibal.bitboard.hash;
 
+/**
+ * Based on the class from the Open Source engine Carballo
+ * https://github.com/albertoruibal/carballo
+ * originally written by Alberto Alonso Ruibal.
+ * 
+ */
 public class ZobristKeyFen {
 
 	static final long[] random64 = {0x9D39247E33776D41L, 0x2AF7398005AAA5C7L, 0x44DB015024623547L, 0x9C15F73E62A76AE2L, 0x75834465489C0C89L,

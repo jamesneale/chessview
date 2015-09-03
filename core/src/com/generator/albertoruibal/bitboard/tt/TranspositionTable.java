@@ -5,13 +5,17 @@ import java.util.Arrays;
 import com.generator.albertoruibal.bitboard.Board;
 import com.generator.albertoruibal.bitboard.Move;
 import com.generator.albertoruibal.bitboard.bb.BitboardUtils;
-
 /**
+ * Based on the class from the Open Source engine Carballo
+ * https://github.com/albertoruibal/carballo
+ * originally written by Alberto Alonso Ruibal.
+ * 
+ * Modified for use in ChessViewer by James Neale 2015
+ * 
  * Transposition table using two keys and multiprobe
  * <p/>
  * Uses part of the board's zobrist key (shifted) as the index
  *
- * @author rui
  */
 public class TranspositionTable {
 

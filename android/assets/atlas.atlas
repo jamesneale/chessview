@@ -60,6 +60,13 @@ chessboard
   orig: 512, 512
   offset: 0, 0
   index: -1
+orangesquare
+  rotate: false
+  xy: 1990, 1786
+  size: 4, 4
+  orig: 4, 4
+  offset: 0, 0
+  index: -1
 selected_chessboard
   rotate: false
   xy: 516, 196
@@ -111,6 +118,19 @@ white_rook
   index: -1
 
 atlas2.png
+size: 2048,2048
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+splash
+  rotate: false
+  xy: 2, 2
+  size: 1920, 1080
+  orig: 1920, 1080
+  offset: 0, 0
+  index: -1
+
+atlas3.png
 size: 512,2048
 format: RGBA8888
 filter: Linear,Linear

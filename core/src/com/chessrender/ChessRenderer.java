@@ -1,16 +1,16 @@
 package com.chessrender;
-import java.util.HashMap;
-
-import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
+import com.chessrender.drawableboard.DrawableChessBoard;
+import com.chessrender.drawableboard.Piece;
 
 
 public class ChessRenderer {
 	
-	private static final float kMinSquareSize = 4f;
+	static final float kMinSquareSize = 4f;
 	
 	private SpriteBatch sprite_batch_;
 	
@@ -19,8 +19,10 @@ public class ChessRenderer {
 	private TextureRegion chessBoard_;
 	private TextureRegion chessBoardSelected_;
 	
-	private TextureRegion[] black_pieces_;
-	private TextureRegion[] white_pieces_;
+	public TextureRegion[] black_pieces_;
+	public TextureRegion[] white_pieces_;
+	
+	private TextureRegion orangeSquare_;
 	
 	public ChessRenderer(TextureAtlas atlas, SpriteBatch sprite_batch) {
 		this.atlas_ = atlas;
@@ -46,28 +48,28 @@ public class ChessRenderer {
 		white_pieces_[Piece.KING] = atlas.findRegion("white_king");
 		white_pieces_[Piece.QUEEN] = atlas.findRegion("white_queen");
 		
+		orangeSquare_ = atlas.findRegion("orangesquare");
 	}
 	
-	
-	public void RenderChessBoard(ChessBoard board, Rectangle inside) {		
-		sprite_batch_.draw(chessBoard_, inside.x, inside.y, inside.width, inside.height);
-		this.RenderPieces(board, inside);
+	public void RenderChessBoard(DrawableChessBoard board, Rectangle inside) {
+		this.RenderChessBoard(chessBoard_, board, inside);
 	}
 	
-	public void RenderSelectedChessBoard(ChessBoard board, Rectangle inside) {
-		sprite_batch_.draw(chessBoardSelected_, inside.x, inside.y, inside.width, inside.height);
-		this.RenderPieces(board, inside);
+	public void RenderChessBoardSelected(DrawableChessBoard board, Rectangle inside) {
+		this.RenderChessBoard(chessBoardSelected_, board, inside);
 	}
 	
-	private void RenderPieces(ChessBoard board, Rectangle inside) {		
+	private void RenderChessBoard(TextureRegion board_img, DrawableChessBoard board, Rectangle inside) {
+		sprite_batch_.draw(board_img, inside.x, inside.y, inside.width, inside.height);
+		
 		float square_size = inside.width / 8;
+		
 		if(square_size < ChessRenderer.kMinSquareSize) {
 			return;
 		}
-		for(Piece p : board.pieces) {
-			sprite_batch_.draw(p.white?white_pieces_[p.name]:black_pieces_[p.name], 
-					inside.x + square_size * p.col, inside.y + square_size * p.row, square_size, square_size);
-		}
+
+		board.renderLine(this, inside.x, inside.y, square_size);
+		board.render(this, inside.x, inside.y, square_size);
 	}
 	
 	public void begin() {
@@ -75,6 +77,13 @@ public class ChessRenderer {
 	}
 	public void end() {
 		this.sprite_batch_.end();
+	}
+	public SpriteBatch getSpriteBatch() {
+		return this.sprite_batch_;
+	}
+
+	public TextureRegion getLineTexture() {
+		return this.orangeSquare_;
 	}
 	
 }

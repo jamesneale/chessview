@@ -4,6 +4,13 @@ import com.generator.albertoruibal.bitboard.Board;
 
 
 /**
+ * 
+ * Based on the class from the Open Source engine Carballo
+ * https://github.com/albertoruibal/carballo
+ * originally written by Alberto Alonso Ruibal.
+ * 
+ * Modified for use in ChessViewer by James Neale 2015
+ *
  * Holds all the possible attacks for a board
  *
  * It is used by the evaluators and the move iterator, and also to speed the SEE calculations detecting not attacked squares
