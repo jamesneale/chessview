@@ -7,7 +7,8 @@ import com.badlogic.gdx.math.Rectangle;
 public class ROI {
 	
 	public static final Rectangle kDefaultVirtualCanvas = new Rectangle(0,0,1,1);
-	private static final float kMinROISize = 0.001f;
+	private static final float MIN_ROI_SIZE = 0.001f;
+	private static final float MAX_ROI_SIZE = 1.2f;
 	
 	
 	// higher is less sensitive
@@ -16,25 +17,25 @@ public class ROI {
 	
 	
 	public final Rectangle kBoundingBox;
-	public Rectangle region_of_interest_;
+	public Rectangle regionOfInterest;
 	
-	private boolean zoom_out_max_;
-	private boolean zoom_in_max_;
+	private boolean zoomMax;
+	private boolean zoomMin;
 	
 	public ROI(Rectangle bounding_box) {
 		this.kBoundingBox = bounding_box;
-		this.region_of_interest_ = new Rectangle(kDefaultVirtualCanvas);
+		this.regionOfInterest = new Rectangle(kDefaultVirtualCanvas);
 	
-		this.zoom_in_max_ = false;
-		this.zoom_out_max_ = true;
+		this.zoomMin = false;
+		this.zoomMax = true;
 	}
 	
 	public void Render(float delta, ShapeRenderer sr) {
 		sr.setColor(Color.RED);
-		sr.rect(kBoundingBox.x + region_of_interest_.x*kBoundingBox.width, 
-										   kBoundingBox.y + region_of_interest_.y*kBoundingBox.height,
-										   region_of_interest_.width*kBoundingBox.width, 
-										   region_of_interest_.height*kBoundingBox.height);
+		sr.rect(kBoundingBox.x + regionOfInterest.x*kBoundingBox.width, 
+										   kBoundingBox.y + regionOfInterest.y*kBoundingBox.height,
+										   regionOfInterest.width*kBoundingBox.width, 
+										   regionOfInterest.height*kBoundingBox.height);
 		sr.setColor(Color.WHITE);
 	}
 	
@@ -42,102 +43,139 @@ public class ROI {
 		return this.kBoundingBox;
 	}
 	
+	/**
+	 * Method to handle zoom events. Zooming in requires a negative amount. Zooming out 
+	 * requires a positive amount. Will unlock the zoom from the maximum if zoomed in and
+	 * vice versa.
+	 * 
+	 * Amount is the % of the zoom. Zoom is relative to the current region size. 
+	 * 
+	 * E.g a zoom of amount -10 will be a 10% zoom in.
+	 * 
+	 * Zoom effect is similar to that found on Google Maps etc. I.e. the locus of the zoom 
+	 * given by x and y should remain the same before and after the zoom takes place.
+	 * 
+	 * @param x is the x value of the zoom locus.
+	 * @param y is the y value of the zoom locus.
+	 * @param amount is the amount to zoom.
+	 * @return true iff a zoom was completed.
+	 */
+	
 	public boolean Zoom(float x, float y, float amount) {
 		
 		if(!this.kBoundingBox.contains(x,y)) {
 			return false;
 		}
 		
-		if(amount > 0) {
-			ZoomOut(x,y,amount);
-		} else {
-			ZoomIn(x,y,amount);
+		// Make zoom equal to amount% of current region size.
+		amount *= regionOfInterest.width * 0.01f;
+		
+		// Constrain and update zoom locking mechanisms.
+		amount = constrainZoom(amount);
+		
+		if(amount == 0) {
+			return false;
 		}
+		
+		// Get left and right bias of zoom locus.
+		float bottomWeight = ((y-kBoundingBox.y)/kBoundingBox.height);
+		float leftWeight = ((x-kBoundingBox.x)/kBoundingBox.width);
+		
+		// perform initial transformation of ROI size. (ROI is always square)
+		regionOfInterest.width += amount;		
+		regionOfInterest.height = regionOfInterest.width;
+		
+		// adjust x and y bias to ensure locus remains in the same position.
+		regionOfInterest.x += -amount*leftWeight;
+		regionOfInterest.y += -amount*bottomWeight;
 		
 		return true;
 	}
 	
-	private void ZoomIn(float x, float y, float amount) {
-		if(this.zoom_in_max_) {
-			return;
-		}
-		float amountf = region_of_interest_.width * -0.1f ;
-		
-		float bottom_weight = ((y-kBoundingBox.y)/kBoundingBox.height);
-		float left_weight = ((x-kBoundingBox.x)/kBoundingBox.width);
-		
+	/**
+	 * Handles the zoom in and zoom amount constraints. Returns a restricted value for
+	 * zoom amount that prevents the ROI from leaving the given bounds. Also sets and
+	 * releases the zoom locks. 
+	 * @param amount is the requested zoom amount (negative = zoom in | positive = zoom out)
+	 * @return constrained value for amount;
+	 */
 
-		region_of_interest_.x += -amountf*left_weight;
-		region_of_interest_.width = Math.max(region_of_interest_.width + amountf, ROI.kMinROISize);
-		
-		region_of_interest_.y += -amountf*bottom_weight;
-		region_of_interest_.height = region_of_interest_.width;
-		
-		zoom_out_max_ = false;
-	}
-	
-	// TODO fix this method to constrain zoom out
-	private void ZoomOut(float x, float y, float amount) {
-		if(this.zoom_out_max_) {
-			return;
+	private float constrainZoom(float amount) {
+		if(amount < 0) {
+			
+			// constrain zoom in operation
+			
+			if (this.zoomMin) {
+				return 0f;
+			}
+			this.zoomMax = false;
+			
+			if(regionOfInterest.width + amount < ROI.MIN_ROI_SIZE) {
+				this.zoomMin = true;
+				return regionOfInterest.width - ROI.MIN_ROI_SIZE;
+			}
+			
+			return amount;
+			
+		} else {
+			
+			// constrain zoom out operation
+			
+			if  (this.zoomMax) {
+				return 0f;
+			}
+			this.zoomMin = false;
+			
+			if(regionOfInterest.width + amount > ROI.MAX_ROI_SIZE) {
+				this.zoomMax = true;
+				return ROI.MAX_ROI_SIZE - regionOfInterest.width;
+			}
+			
+			return amount;
 		}
-		float amountf = region_of_interest_.width * 0.1f ;
-		
-		float bottom_weight = ((y-kBoundingBox.y)/kBoundingBox.height);
-		float left_weight = ((x-kBoundingBox.x)/kBoundingBox.width);
-		
-
-		region_of_interest_.x += -amountf*left_weight;
-		region_of_interest_.width = Math.max(region_of_interest_.width + amountf, ROI.kMinROISize);
-		
-		region_of_interest_.y += -amountf*bottom_weight;
-		region_of_interest_.height = region_of_interest_.width;
-		
-		zoom_in_max_ = false;
 	}
-	
 	
 	// The given virtual coordinates become the absolute coords
 	public void Reconstrain(Rectangle virtual_coords) {
 		
 		float x_scale = 1/virtual_coords.width;
-		region_of_interest_.x -= virtual_coords.x;
-		region_of_interest_.x *= x_scale;
-		region_of_interest_.width *= x_scale;
+		regionOfInterest.x -= virtual_coords.x;
+		regionOfInterest.x *= x_scale;
+		regionOfInterest.width *= x_scale;
 		
 		float y_scale = 1/virtual_coords.height;
-		region_of_interest_.y -= virtual_coords.y;
-		region_of_interest_.y *= y_scale;
-		region_of_interest_.height *= y_scale;
-		
+		regionOfInterest.y -= virtual_coords.y;
+		regionOfInterest.y *= y_scale;
+		regionOfInterest.height *= y_scale;
 	}
+	
+	
 	public void Reset() {
-		this.region_of_interest_ = new Rectangle(0,0,1,1);
-		
+		this.regionOfInterest = new Rectangle(0,0,1,1);	
 	}
 	
 	public void ZoomInLimit() {
-		this.zoom_in_max_ = true;
+		this.zoomMin = true;
 	}
 	public void ZoomOutLimit() {
-		this.zoom_out_max_ = true;
+		this.zoomMax = true;
 	}
 
 	public void Pan(float deltaX, float deltaY) {
-		region_of_interest_.x -= deltaX / ((1.0f/region_of_interest_.width) * 1000f);
-		region_of_interest_.y += deltaY / ((1.0f/region_of_interest_.height) * 1000f);
+		regionOfInterest.x -= deltaX / ((1.0f/regionOfInterest.width) * 1000f);
+		regionOfInterest.y += deltaY / ((1.0f/regionOfInterest.height) * 1000f);
 		
 	}
 
 	public boolean ZoomOutRequired() {
-		return !ROI.kDefaultVirtualCanvas.contains(this.region_of_interest_);
+		return !ROI.kDefaultVirtualCanvas.contains(this.regionOfInterest);
 	}
 
 	public void Deconstrain(Rectangle virtual_position) {
-		region_of_interest_.x = virtual_position.x + virtual_position.width * region_of_interest_.x;
-		region_of_interest_.y = virtual_position.y + virtual_position.height * region_of_interest_.y;
-		region_of_interest_.width = region_of_interest_.width * virtual_position.width;
-		region_of_interest_.height = virtual_position.height * region_of_interest_.height;	
+		regionOfInterest.x = virtual_position.x + virtual_position.width * regionOfInterest.x;
+		regionOfInterest.y = virtual_position.y + virtual_position.height * regionOfInterest.y;
+		regionOfInterest.width = regionOfInterest.width * virtual_position.width;
+		regionOfInterest.height = virtual_position.height * regionOfInterest.height;	
 	
 	}
 

@@ -44,11 +44,11 @@ public class SplashScreen extends AbstractScreen {
 		
 		splash.setAlpha(Math.max(0, Math.min(1f,alpha)));
 		
-		kApplication.sprite_back().begin();
+		kApplication.spriteBatch().begin();
 		
-		splash.draw(kApplication.sprite_back());
+		splash.draw(kApplication.spriteBatch());
 		
-		kApplication.sprite_back().end();
+		kApplication.spriteBatch().end();
 	}
 
 	@Override

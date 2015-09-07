@@ -27,12 +27,8 @@ public class ChessView extends Game {
 		
 		
 	}
-
-	public ShapeRenderer shape_renderer() {
-		return this.shape_renderer_;
-	}
 	
-	public SpriteBatch sprite_back() {
+	public SpriteBatch spriteBatch() {
 		return this.sprite_batch_;
 	}
 	

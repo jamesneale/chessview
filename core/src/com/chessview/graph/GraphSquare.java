@@ -6,7 +6,8 @@ import java.util.List;
 import com.badlogic.gdx.math.Rectangle;
 import com.chessview.data.DataRetrieval;
 import com.chessview.data.Requester;
-import com.chessview.graph.layout.GridLayoutManager;
+import com.chessview.graph.layout.Layout;
+import com.chessview.graph.layout.LayoutManager;
 import com.chessview.region.ROI;
 import com.chessview.screen.ChessViewScreen;
 
@@ -17,7 +18,7 @@ public abstract class GraphSquare implements Requester{
 	private boolean request_made_;
 	
 	/// The children on this node from 0+
-	private volatile List<GraphSquareChild> children_;
+	protected volatile List<GraphSquare> children_;
 	protected DataRetrieval data_retreiver;
 	
 	
@@ -28,42 +29,49 @@ public abstract class GraphSquare implements Requester{
 		this.request_made_ = false;
 	}
 	
-	protected abstract void render_node(Rectangle drawable_region);
-	protected abstract void render_node(ROI region);
+	protected abstract void renderNode(Rectangle drawable_region);
+	protected abstract void renderNodeDataOnly(Rectangle drawable_region);
+	protected abstract void renderNode(ROI region);
 	
 	
 	// called by main thread
-	public GraphSquareChild render(ROI region) {
+	public int render(ROI region) {
 		if(children_ == null) {
 			if(!request_made_) {
 				if(GenerateChildren()) {
 					request_made_ = true;
 				}
 			}
-			return null;
+			return -1;
 		}			
 				
-		GraphSquareChild last_rendered = null;
+		int last_rendered = -1;
 		
-		for(GraphSquareChild child : children_) {
-			Rectangle bounding_box = GetBoundingBox(region.kBoundingBox, child.virtual_position, region.region_of_interest_);
+		Layout layout = LayoutManager.getLayoutInstance();
+		
+		// render children data
+		for(int i = 0; i < children_.size(); ++i) {
+			Rectangle bounding_box = GetBoundingBox(region.kBoundingBox, 
+					layout.getVirtualPosition(children_.size(), i),
+					region.regionOfInterest);
 			
 			if(bounding_box != null) {
-				last_rendered = child;
-				child.graph.render(bounding_box, 0);
+				last_rendered = i;
+				children_.get(i).render(bounding_box, 0);
 			}
 		}
-	
 		
-		this.render_node(region);
+		// render this node's data
+		this.renderNode(region);
 		
-		if(last_rendered == null) {
+		if(last_rendered == -1) {
+			// no children rendered so constrain zoom in
 			region.ZoomInLimit();
-		} else if(last_rendered.virtual_position.contains(region.region_of_interest_)) {
+		} else if(layout.getVirtualPosition(children_.size(), last_rendered).contains(region.regionOfInterest)) {
 			return last_rendered;
 		}
 		
-		return null;
+		return -1;
 		
 	}
 	
@@ -75,6 +83,13 @@ public abstract class GraphSquare implements Requester{
 			return;
 		}
 		
+		if(LayoutManager.dataOnly() && bounding_box.width < ChessViewScreen.kDrawableRegion.width/2) {
+			this.renderNodeDataOnly(bounding_box);
+			return;
+		}
+		
+		Layout layout = LayoutManager.getLayoutInstance();
+		
 		// Check large enough to draw children
 		if(bounding_box.width > minSize) {
 			
@@ -85,16 +100,27 @@ public abstract class GraphSquare implements Requester{
 					}
 				}
 				return;
-			}	
-			
-			for(GraphSquareChild child : children_) {	
-				child.graph.render(GetBoundingBox(bounding_box, child.virtual_position), depth+1);
 			}
+			
+			
+			
+			for(int i = 0; i < children_.size(); ++i) {
+				children_.get(i).render(GetBoundingBox(bounding_box, 
+						layout.getVirtualPosition(children_.size(), i)), depth+1);
+			}
+			
 		}
 		
-		this.render_node(bounding_box);
+		this.renderNode(bounding_box);
 	}
 	
+	public Rectangle getChildVirtualPosition(int index) {
+		return LayoutManager.getLayoutInstance().getVirtualPosition(children_.size(), index);
+	}
+	
+	public GraphSquare getChildNode(int index) {
+		return children_.get(index);
+	}
 	
 	
 	
@@ -125,12 +151,10 @@ public abstract class GraphSquare implements Requester{
 			return;
 		}
 		
-		ArrayList<GraphSquareChild> new_children = new ArrayList<GraphSquareChild>();
-		
-		GridLayoutManager layout_manager = new GridLayoutManager(children_data.size());
+		ArrayList<GraphSquare> new_children = new ArrayList<GraphSquare>();
 		
 		for(int i = 0; i < children_data.size(); ++i) {
-			new_children.add(make_child(children_data.get(i), layout_manager.GetNext()));
+			new_children.add(makeChild(children_data.get(i)));
 		}
 		
 		this.children_ = new_children;
@@ -140,18 +164,65 @@ public abstract class GraphSquare implements Requester{
 
 	protected abstract boolean GenerateChildren();
 		//;
-	protected abstract GraphSquareChild make_child(Object data, Rectangle virtual_position);
+	protected abstract GraphSquare makeChild(Object data);
 
-	public void CullGrandChildrenExcept(Rectangle avoid) {
+	public void CullGrandChildrenExcept(GraphSquare avoid) {
 		if(children_ == null) {
 			return;
 		}
-		for(GraphSquareChild gsc : children_) {
-			if(!gsc.virtual_position.equals(avoid)) {
-				gsc.graph.children_ = null;
-				gsc.graph.request_made_ = false;
+		for(GraphSquare gsc : children_) {
+			if(gsc != avoid) {
+				//TODO remove direct modification - little bit hacky
+				gsc.children_ = null;
+				gsc.request_made_ = false;
 			}
 		}
+	}
+
+	public int getChildIndex(GraphSquare previous) {
+		for(int i = 0; i < children_.size();++i) {
+			if(previous == children_.get(i)) {
+				return i;
+			}
+		}
+		return -1;
+	}
+	
+	public boolean touchDown(float x, float y, int button, ROI region) {
+		
+		x = region.regionOfInterest.x + region.regionOfInterest.width*((x-region.kBoundingBox.x)/region.kBoundingBox.width);
+		y = region.regionOfInterest.y + region.regionOfInterest.height*((y-region.kBoundingBox.y)/region.kBoundingBox.height);
+		
+		Layout layout = LayoutManager.getLayoutInstance();
+		Rectangle data = layout.getChessBoardPosition(0);
+		
+		if(data.contains(x,y)) {
+			this.interactData(x-data.x,y-data.y);
+			return true;
+		}
+		
+		if(children_ == null) {
+			return false;
+		}
+		Rectangle vp;
+		for(int i = 0; i < children_.size(); ++i) {
+			vp = layout.getVirtualPosition(children_.size(), i);
+			float xOffset = x - vp.x * data.x;
+			if(xOffset > 0 && xOffset < vp.width * data.width) {
+				float yOffset = y - vp.y * data.y;
+				if(yOffset > 0 && yOffset < vp.width * data.width) {
+					children_.get(i).interactData(xOffset, yOffset);
+				}
+			}
+		}
+		
+		return false;
+		
+	}
+	
+	
+	protected void interactData(float x, float y) {
+		System.out.println(x + " " + y);
 	}
 	
 }

@@ -8,7 +8,7 @@ import com.generator.perft.Perft;
 
 public abstract class DataRetrieval implements Runnable{
 	
-	private long node_count;
+	private static long nodeCount;
 	public ArrayBlockingQueue<DataRequest> data_requests_;
 	
 	public DataRetrieval() {
@@ -25,7 +25,7 @@ public abstract class DataRetrieval implements Runnable{
 				DataRequest new_request = data_requests_.take();
 				ArrayList<Object> children = GenerateNodes(new_request.node_data);
 				new_request.requester.AddData(children);
-				this.node_count += children.size();
+				nodeCount += children.size();
 				
 			
 			} catch (Exception e) {
@@ -36,8 +36,8 @@ public abstract class DataRetrieval implements Runnable{
 	}
 
 
-	public String getNodeCount() {
-		return this.node_count + "";
+	public static long getNodeCount() {
+		return nodeCount;
 	}
 	
 }

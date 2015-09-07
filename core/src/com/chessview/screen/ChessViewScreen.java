@@ -7,7 +7,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.input.GestureDetector.GestureListener;
 import com.badlogic.gdx.math.Rectangle;
@@ -18,9 +17,10 @@ import com.chessrender.drawableboard.ChessBoardBitBasic;
 import com.chessview.ChessView;
 import com.chessview.data.BoardDataRetrieval;
 import com.chessview.graph.GraphSquare;
-import com.chessview.graph.GraphSquareChild;
 import com.chessview.graph.chess.ChessGraphSquare;
+import com.chessview.graph.layout.LayoutManager;
 import com.chessview.region.ROI;
+import com.chessview.screen.ui.HUD;
 import com.generator.albertoruibal.bitboard.Board;
 import com.movelist.MoveList;
 
@@ -35,7 +35,7 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 	private final GraphSquare kRootNode;
 	
 	/// The full move list taken in the current path - used as a stack
-	private ArrayDeque<GraphSquareChild> game_path_;
+	private ArrayDeque<GraphSquare> game_path_;
 	
 	/// Initial board state
 	
@@ -51,20 +51,12 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 	/// Handles the drawing of chessboards
 	private ChessRenderer chessboard_renderer_;
 	
-	/// UI overlay
-	private TextureRegion overlay;
+	/// HUD
+	private HUD hud;
+	private boolean disableDrag;
+	
+	// Background image
 	private Sprite background;
-	
-	// Text
-	private GlyphLayout glyph_layout;
-	private String node_count;
-	
-	// Move List
-	private MoveList moveList;
-	
-	// Android Zoom
-	private float previous_distance;
-	private static final float kMinForScroll = 2f;
 	
 	int frame_count = 0;
 	
@@ -85,11 +77,8 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 		Board temp = new Board();
 		temp.setFen(kInitialFen);
 
-		this.chessboard_renderer_ = new ChessRenderer(kApplication.atlas(), kApplication.sprite_back());
+		this.chessboard_renderer_ = new ChessRenderer(kApplication.atlas(), kApplication.spriteBatch());
 		kRootNode = new ChessGraphSquare(data_retreiver, new ChessBoardBitBasic(temp), this.chessboard_renderer_);
-	
-		this.glyph_layout = new GlyphLayout();
-		this.node_count = "";
 	}
 
 	@Override
@@ -98,78 +87,76 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 
 		// Set up data retrieval.
 		new Thread(this.data_retreiver).start();
+		
+		// Set up layout manager
+		
+		LayoutManager.setUpLayouts(kApplication.atlas());
 
 		// Set up game tree
-		this.game_path_ = new ArrayDeque<GraphSquareChild>();
-		this.game_path_.addFirst(new GraphSquareChild(kRootNode, new Rectangle()));
+		this.game_path_ = new ArrayDeque<GraphSquare>();
+		this.game_path_.addFirst(kRootNode);
 
 		// Set up UI
 		this.background = kApplication.atlas().createSprite("background");
 		this.background.setPosition(-kVirtualWidth/2, -kVirtualHeight/2);
-		this.overlay = kApplication.atlas().findRegion("overlay");
+		
+		this.disableDrag = false;
+		
+		this.hud = new HUD(background.getX(), background.getY(), kApplication.atlas(), this.textFont);
+		
 		region_of_interest_ = new ROI(ChessViewScreen.kDrawableRegion);
+		
 		if(Gdx.app.getType() == ApplicationType.Desktop) {
 			Gdx.input.setInputProcessor(this);
 		} else {
 			Gdx.input.setInputProcessor(new GestureDetector(this));
 		}
 		
-		moveList = new MoveList(new Rectangle(-910, -250, 250, 620), this.textFont);
 	}
 	
 	@Override
 	public void render(float delta) {
 		super.render(delta);		
 		
-		GraphSquareChild next_node = null;
+		int nextNodeIndex = -1;
 		
 		//prepare text
-		if(!this.node_count.equals(this.data_retreiver.getNodeCount())) {
-			glyph_layout.setText(this.textFont, this.node_count);
-			this.node_count = this.data_retreiver.getNodeCount();
+		
+		
+		kApplication.spriteBatch().begin(); {
+			this.background.draw(kApplication.spriteBatch());
 		}
-		
-		
-		
-		kApplication.sprite_back().begin(); {
-			this.background.draw(kApplication.sprite_back());
-		}
-		kApplication.sprite_back().end();
+		kApplication.spriteBatch().end();
 	
 		this.chessboard_renderer_.begin(); {		
-			next_node = game_path_.peek().graph.render(region_of_interest_);
+			nextNodeIndex = game_path_.peek().render(region_of_interest_);
 		} 
 		this.chessboard_renderer_.end();
 		
-		kApplication.sprite_back().begin(); {
-			kApplication.sprite_back().draw(overlay, -AbstractScreen.kVirtualWidth/2, -AbstractScreen.kVirtualHeight/2);
-		
-			this.moveList.render(kApplication.sprite_back());
-			this.textFont.draw(kApplication.sprite_back(), this.glyph_layout, -720-this.glyph_layout.width, -365);
-			
+		kApplication.spriteBatch().begin(); {
+			hud.render(kApplication.spriteBatch(), delta);
 		}
-		kApplication.sprite_back().end();
+		kApplication.spriteBatch().end();
 		
 		
-		if(next_node != null) {
+		if(nextNodeIndex > -1) {
 			if(game_path_.size() > 1) {
-				GraphSquareChild cur_top = game_path_.pop();
-				game_path_.peek().graph.CullGrandChildrenExcept(cur_top.virtual_position);
+				
+				// Cull grandchildren to deallocate memory 
+				GraphSquare cur_top = game_path_.pop();
+				game_path_.peek().CullGrandChildrenExcept(cur_top);
 				game_path_.push(cur_top);
 			}
-			game_path_.push(next_node);
-			this.region_of_interest_.Reconstrain(next_node.virtual_position);
+			this.region_of_interest_.Reconstrain(game_path_.peek().getChildVirtualPosition(nextNodeIndex));
+			game_path_.push(game_path_.peek().getChildNode(nextNodeIndex));
 		
-			this.moveList.push(this.game_path_.peek().graph.toString());
+			this.hud.pushMove(this.game_path_.peek().toString());
 			
 		} else if(game_path_.size() > 1 && this.region_of_interest_.ZoomOutRequired()) {
-			next_node = game_path_.pop();
-			this.region_of_interest_.Deconstrain(next_node.virtual_position);
-			
-			this.moveList.pop();
+			GraphSquare previous = game_path_.pop();
+			region_of_interest_.Deconstrain(game_path_.peek().getChildVirtualPosition(game_path_.peek().getChildIndex(previous)));
+			this.hud.popMove();
 		}
-		
-		
 	}
 
 	@Override
@@ -196,76 +183,12 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 		
 	}
 
-	@Override
-	public boolean touchDown(float x, float y, int pointer, int button) {
-		System.out.println(this.unproject(new Vector3(x,y,0)));
-		return false;
-	}
-
-	@Override
-	public boolean tap(float x, float y, int count, int button) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public boolean longPress(float x, float y) {
-		return true;
-	}
-
-	@Override
-	public boolean fling(float velocityX, float velocityY, int button) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public boolean pan(float x, float y, float deltaX, float deltaY) {
-		region_of_interest_.Pan(deltaX, deltaY);
-		return true;
-	}
-
-	@Override
-	public boolean panStop(float x, float y, int pointer, int button) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public boolean zoom(float initialDistance, float distance) {
-		if(distance > this.previous_distance) {
-			if(distance - this.previous_distance > kMinForScroll) {
-				
-			}
-		}
-		
-		System.out.println(initialDistance + " " + distance);
-		return true;
-	}
-
-	@Override
-	public boolean pinch(Vector2 initialPointer1, Vector2 initialPointer2,
-			Vector2 pointer1, Vector2 pointer2) {
-		return false;
-		/*
-		initialPointer1.lerp(initialPointer2, 0.5f);
-		Vector3 midpoint = new Vector3(initialPointer1.x, initialPointer2.y, 0);
-		
-		float distance = pointer1.dst2(pointer2);
-		int dir = distance > this.previous_distance?1:-1;
-		this.previous_distance = distance;
-		
-		this.unproject(midpoint);
-		System.out.println(midpoint + " " + dir);
-		return region_of_interest_.Zoom(initialPointer1.x, initialPointer1.y, dir);
-	*/
-	}
 
 
 	@Override
 	public boolean scrolled(int amount) {
 		Vector3 mouse_pos = this.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0));
-		return region_of_interest_.Zoom(mouse_pos.x, mouse_pos.y, amount*4);
+		return region_of_interest_.Zoom(mouse_pos.x, mouse_pos.y, amount*25);
 	}
 
 	@Override
@@ -288,18 +211,33 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-		return true;
-	}
-
-	@Override
-	public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-		// TODO Auto-generated method stub
+		Vector3 mousePos = this.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0));
+		if(this.hud.touchDown(mousePos.x, mousePos.y, button)) {
+			this.disableDrag = true;
+			return true;
+		}
+		
+		if(this.game_path_.peek().touchDown(mousePos.x, mousePos.y, button, this.region_of_interest_)) {
+			this.disableDrag = true;
+			return true;
+		}
 		return false;
 	}
 
 	@Override
+	public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+		Vector3 mousePos = this.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0));
+		this.hud.touchUp(mousePos.x, mousePos.y, button);
+		
+		disableDrag = false;
+		return true;
+	}
+
+	@Override
 	public boolean touchDragged(int screenX, int screenY, int pointer) {
-		region_of_interest_.Pan(Gdx.input.getDeltaX(), Gdx.input.getDeltaY());
+		if(!disableDrag) {
+			region_of_interest_.Pan(Gdx.input.getDeltaX(), Gdx.input.getDeltaY());
+		}
 		return true;
 	}
 
@@ -308,5 +246,59 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 		// TODO Auto-generated method stub
 		return false;
 	}
+
+	
+	
+	
+	// TOUCH SCREEN HANDLERS
+	@Override
+	public boolean touchDown(float x, float y, int pointer, int button) {
+		return false;
+	}
+
+	@Override
+	public boolean tap(float x, float y, int count, int button) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean longPress(float x, float y) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean fling(float velocityX, float velocityY, int button) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean pan(float x, float y, float deltaX, float deltaY) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean panStop(float x, float y, int pointer, int button) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean zoom(float initialDistance, float distance) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean pinch(Vector2 initialPointer1, Vector2 initialPointer2,
+			Vector2 pointer1, Vector2 pointer2) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	
 
 }

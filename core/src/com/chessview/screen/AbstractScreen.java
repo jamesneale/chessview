@@ -67,8 +67,7 @@ public abstract class AbstractScreen implements Screen {
 	
 	@Override
 	public void show() {
-		kApplication.shape_renderer().setProjectionMatrix(camera_.combined);
-		kApplication.sprite_back().setProjectionMatrix(camera_.combined);
+		kApplication.spriteBatch().setProjectionMatrix(camera_.combined);
 	}
 	
 	

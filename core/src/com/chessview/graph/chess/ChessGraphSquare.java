@@ -6,15 +6,14 @@ import com.chessrender.drawableboard.ChessBoardBitBasic;
 import com.chessview.data.BoardDataRetrieval;
 import com.chessview.data.DataRequest;
 import com.chessview.graph.GraphSquare;
-import com.chessview.graph.GraphSquareChild;
+import com.chessview.graph.layout.Layout;
+import com.chessview.graph.layout.LayoutManager;
 import com.chessview.region.ROI;
 
 public class ChessGraphSquare extends GraphSquare {
 
 	private ChessRenderer cr;
 	private ChessBoardBitBasic board;
-	
-	public static final Rectangle chessboard_region = new Rectangle(0.4f, 0.35f, 0.2f, 0.3f);
 	
 	public ChessGraphSquare(BoardDataRetrieval data_retreiver, ChessBoardBitBasic node_data, ChessRenderer cr) {
 		super(data_retreiver);
@@ -23,18 +22,35 @@ public class ChessGraphSquare extends GraphSquare {
 	}
 
 	@Override
-	protected void render_node(Rectangle drawable_region) {
-		Rectangle chessboard = new Rectangle(drawable_region.x + drawable_region.width * chessboard_region.x, 
-											 drawable_region.y + drawable_region.height * chessboard_region.y, 
-											 drawable_region.width * chessboard_region.width, 
-											 drawable_region.height * chessboard_region.height);
+	protected void renderNode(Rectangle drawableRegion) {
 		
+		Layout curLayout = LayoutManager.getLayoutInstance();
+		Rectangle chessboard = new Rectangle(curLayout.getChessBoardPosition(children_!=null?children_.size():0));
+		
+		chessboard.height *= drawableRegion.height;
+		chessboard.width *= drawableRegion.width;
+		chessboard.x = drawableRegion.x + drawableRegion.width*chessboard.x;
+		chessboard.y = drawableRegion.y + drawableRegion.height*chessboard.y;
+
+		cr.RenderChessBoard(this.board, chessboard);
+	}
+	
+	@Override
+	protected void renderNodeDataOnly(Rectangle drawableRegion) {
+		
+		Rectangle chessboard = new Rectangle(Layout.CHESSBOARD_ONLY_REGION);
+		
+		chessboard.height *= drawableRegion.height;
+		chessboard.width *= drawableRegion.width;
+		chessboard.x = drawableRegion.x + drawableRegion.width*chessboard.x;
+		chessboard.y = drawableRegion.y + drawableRegion.height*chessboard.y;
+
 		cr.RenderChessBoard(this.board, chessboard);
 	}
 
 	@Override
-	protected GraphSquareChild make_child(Object node_data, Rectangle virtual_position) {
-		return new GraphSquareChild(new ChessGraphSquare((BoardDataRetrieval)this.data_retreiver, (ChessBoardBitBasic)node_data, cr), virtual_position);
+	protected GraphSquare makeChild(Object node_data) {
+		return new ChessGraphSquare((BoardDataRetrieval)this.data_retreiver, (ChessBoardBitBasic)node_data, cr);
 	}
 	
 	@Override
@@ -43,9 +59,11 @@ public class ChessGraphSquare extends GraphSquare {
 	}
 
 	@Override
-	protected void render_node(ROI region) {
+	protected void renderNode(ROI region) {
 		
-		Rectangle chessboard = GetBoundingBox(region.kBoundingBox, chessboard_region, region.region_of_interest_);
+		Rectangle chessboard = GetBoundingBox(region.kBoundingBox, 
+				LayoutManager.getLayoutInstance().getChessBoardPosition(children_!=null?children_.size():0), 
+				region.regionOfInterest);
 		if(chessboard != null) {
 			cr.RenderChessBoardSelected(this.board, chessboard);
 		}
