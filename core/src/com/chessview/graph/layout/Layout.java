@@ -24,9 +24,7 @@ public abstract class Layout {
 		return null;
 	}
 
-	public final Rectangle getChessBoardPosition(int i) {
-		return Layout.DEFAULT_CHESSBOARD_REGION;
-	}
+	public abstract Rectangle getChessBoardPosition(int i);
 	
 	
 }

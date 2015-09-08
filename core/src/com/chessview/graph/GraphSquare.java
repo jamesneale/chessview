@@ -19,12 +19,9 @@ public abstract class GraphSquare implements Requester{
 	
 	/// The children on this node from 0+
 	protected volatile List<GraphSquare> children_;
-	protected DataRetrieval data_retreiver;
 	
 	
-	public GraphSquare(DataRetrieval data_retreiver) {
-		this.data_retreiver = data_retreiver;
-		
+	public GraphSquare() {		
 		this.children_ = null;
 		this.request_made_ = false;
 	}
@@ -51,6 +48,12 @@ public abstract class GraphSquare implements Requester{
 		
 		// render children data
 		for(int i = 0; i < children_.size(); ++i) {
+			
+			Rectangle vp = layout.getVirtualPosition(children_.size(), i);
+			if(vp == null) {
+				continue;
+			}
+			
 			Rectangle bounding_box = GetBoundingBox(region.kBoundingBox, 
 					layout.getVirtualPosition(children_.size(), i),
 					region.regionOfInterest);
@@ -68,7 +71,10 @@ public abstract class GraphSquare implements Requester{
 			// no children rendered so constrain zoom in
 			region.ZoomInLimit();
 		} else if(layout.getVirtualPosition(children_.size(), last_rendered).contains(region.regionOfInterest)) {
+			region.ZoomInEnable();
 			return last_rendered;
+		} else {
+			region.ZoomInEnable();
 		}
 		
 		return -1;
@@ -105,8 +111,11 @@ public abstract class GraphSquare implements Requester{
 			
 			
 			for(int i = 0; i < children_.size(); ++i) {
-				children_.get(i).render(GetBoundingBox(bounding_box, 
-						layout.getVirtualPosition(children_.size(), i)), depth+1);
+				Rectangle vp = layout.getVirtualPosition(children_.size(), i);
+				if(vp == null) {
+					continue;
+				}
+				children_.get(i).render(GetBoundingBox(bounding_box, vp), depth+1);
 			}
 			
 		}
@@ -193,36 +202,42 @@ public abstract class GraphSquare implements Requester{
 		x = region.regionOfInterest.x + region.regionOfInterest.width*((x-region.kBoundingBox.x)/region.kBoundingBox.width);
 		y = region.regionOfInterest.y + region.regionOfInterest.height*((y-region.kBoundingBox.y)/region.kBoundingBox.height);
 		
+		
+		
 		Layout layout = LayoutManager.getLayoutInstance();
 		Rectangle data = layout.getChessBoardPosition(0);
 		
+		
 		if(data.contains(x,y)) {
-			this.interactData(x-data.x,y-data.y);
+			this.interactData((x-data.x)/data.width,(y-data.y)/data.height);
 			return true;
 		}
-		
+
 		if(children_ == null) {
 			return false;
 		}
-		Rectangle vp;
+		
+		Rectangle vp = new Rectangle();
 		for(int i = 0; i < children_.size(); ++i) {
-			vp = layout.getVirtualPosition(children_.size(), i);
-			float xOffset = x - vp.x * data.x;
-			if(xOffset > 0 && xOffset < vp.width * data.width) {
-				float yOffset = y - vp.y * data.y;
-				if(yOffset > 0 && yOffset < vp.width * data.width) {
-					children_.get(i).interactData(xOffset, yOffset);
-				}
+			if(layout.getVirtualPosition(children_.size(), i) == null) {
+				continue;
 			}
+			vp.set(layout.getVirtualPosition(children_.size(), i));
+			vp.x += data.x * vp.width;
+			vp.y += data.y * vp.height;
+			vp.width *= data.width;
+			vp.height *= data.height;
+			
+			if(vp.contains(x,y)) {
+				children_.get(i).interactData((x-vp.x)/vp.width, (y-vp.y)/vp.height);
+			}
+			
 		}
 		
 		return false;
-		
 	}
 	
-	
-	protected void interactData(float x, float y) {
-		System.out.println(x + " " + y);
-	}
+	protected abstract void interactData(float x, float y);
+	public abstract Object getData();
 	
 }

@@ -10,11 +10,8 @@ public class ROI {
 	private static final float MIN_ROI_SIZE = 0.001f;
 	private static final float MAX_ROI_SIZE = 1.2f;
 	
-	
 	// higher is less sensitive
 	public static final float sensitivity = 50;
-	
-	
 	
 	public final Rectangle kBoundingBox;
 	public Rectangle regionOfInterest;
@@ -157,6 +154,11 @@ public class ROI {
 	public void ZoomInLimit() {
 		this.zoomMin = true;
 	}
+	
+	public void ZoomInEnable() {
+		this.zoomMin = false;
+	}
+	 
 	public void ZoomOutLimit() {
 		this.zoomMax = true;
 	}

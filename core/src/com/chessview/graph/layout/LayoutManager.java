@@ -7,7 +7,7 @@ public class LayoutManager {
 	
 	private static Layout[] layouts;
 	
-	private static int activeLayout = 0;
+	private static int activeLayout = 2;
 	private static boolean chessBoardOnly = false;
 	
 	
@@ -28,9 +28,7 @@ public class LayoutManager {
 	}
 	
 	public static void nextLayout() {
-		/*
-		layouts[activeLayout].chessBoardOnly = false;
-		activeLayout = (activeLayout+1)%layouts.length;*/
+		activeLayout = (activeLayout+1)%layouts.length;
 	}
 	
 	public static void toggleDataOnly() {

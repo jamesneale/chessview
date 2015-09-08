@@ -1,4 +1,4 @@
-package com.movelist;
+package com.chessview.screen.ui;
 
 import java.util.ArrayList;
 
@@ -35,6 +35,9 @@ public class MoveList {
 		for(GlyphLayout move : moveList) {
 			font.draw(batch, move, location.x, offset);
 			offset -= move.height + VERTICAL_SPACING;
+			if(offset < location.y) {
+				return;
+			}
 		}
 	}
 	

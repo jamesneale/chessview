@@ -1,6 +1,5 @@
 package com.chessview.screen.ui;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -10,7 +9,6 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.chessview.data.DataRetrieval;
 import com.chessview.graph.layout.LayoutManager;
-import com.movelist.MoveList;
 
 public class HUD {
 	private Vector2 position;
@@ -24,6 +22,7 @@ public class HUD {
 	private BitmapFont font;
 	
 	private static final Rectangle layoutButton = new Rectangle(22,28,245,65);
+	private static final Rectangle boardOnlyButton = new Rectangle(22, 980, 245, 80);
 	
 	
 	public HUD(float x, float y, TextureAtlas atlas, BitmapFont font) {
@@ -69,7 +68,7 @@ public class HUD {
 		this.moveList.pop();
 	}
 	
-	public boolean touchUp(float x, float y, int button) {
+	public boolean touchUp() {
 		LayoutManager.disableDataOnly();
 		return false;
 	}
@@ -83,12 +82,9 @@ public class HUD {
 		y -= this.position.y;
 		
 		if(HUD.layoutButton.contains(x, y)) {
-			if(button == 1) {
-				LayoutManager.enableDataOnly();
-			}
-			else {
-				LayoutManager.nextLayout();
-			}
+			LayoutManager.nextLayout();
+		} else if(HUD.boardOnlyButton.contains(x, y)) {
+			LayoutManager.enableDataOnly();
 		}
 		
 		return true;

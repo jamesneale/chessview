@@ -18,7 +18,7 @@ public abstract class AbstractScreen implements Screen {
 
 	public static final int kVirtualWidth = 1920;
 	public static final int kVirtualHeight = 1080;
-	private static final float kAspectRatio = kVirtualWidth/kVirtualHeight;
+	private static final float kAspectRatio = ((float)kVirtualWidth)/kVirtualHeight;
 	
 	protected BitmapFont textFont;
 	
@@ -38,6 +38,8 @@ public abstract class AbstractScreen implements Screen {
 	 
 	@Override
 	public void resize(int width, int height) {
+
+		System.out.println("gere");
 		float aspectRatio = (float)width/(float)height;
 		float scale = 1f;
 		Vector2 crop = new Vector2(0f, 0f);

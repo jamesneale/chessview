@@ -73,4 +73,9 @@ public class GridLayout extends Layout {
 		}
 		return this.layouts.get(layout).get(index);
 	}
+
+	@Override
+	public Rectangle getChessBoardPosition(int i) {
+		return Layout.DEFAULT_CHESSBOARD_REGION;
+	}
 }

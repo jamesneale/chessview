@@ -16,24 +16,25 @@ import com.chessrender.ChessRenderer;
 import com.chessrender.drawableboard.ChessBoardBitBasic;
 import com.chessview.ChessView;
 import com.chessview.data.BoardDataRetrieval;
+import com.chessview.data.DataManager;
 import com.chessview.graph.GraphSquare;
 import com.chessview.graph.chess.ChessGraphSquare;
 import com.chessview.graph.layout.LayoutManager;
 import com.chessview.region.ROI;
+import com.chessview.screen.ui.DualInputGestureDetector;
+import com.chessview.screen.ui.DualInputGestureDetector.DualGestureListener;
 import com.chessview.screen.ui.HUD;
+import com.chessview.screen.ui.MoveList;
 import com.generator.albertoruibal.bitboard.Board;
-import com.movelist.MoveList;
 
-public class ChessViewScreen extends AbstractScreen implements GestureListener, InputProcessor {
+public class ChessViewScreen extends AbstractScreen implements DualGestureListener {
 
+	public static final int THREAD_COUNT = 4;
 	
 	/*
 	 * Game tree graph variables
 	 */
-	
-	/// Root node of the graph. Initial board state.
-	private final GraphSquare kRootNode;
-	
+
 	/// The full move list taken in the current path - used as a stack
 	private ArrayDeque<GraphSquare> game_path_;
 	
@@ -63,8 +64,6 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 	/*
 	 * Data generation
 	 */
-	/// Handles all data retrieval. Run as a separate thread.
-	private BoardDataRetrieval data_retreiver;
 	
 	/// FEN representation of the starting board
 	private final String kInitialFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -72,13 +71,7 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 	public ChessViewScreen(ChessView kApplication) {
 		super(kApplication);
 		
-		this.data_retreiver = new BoardDataRetrieval();
-		
-		Board temp = new Board();
-		temp.setFen(kInitialFen);
 
-		this.chessboard_renderer_ = new ChessRenderer(kApplication.atlas(), kApplication.spriteBatch());
-		kRootNode = new ChessGraphSquare(data_retreiver, new ChessBoardBitBasic(temp), this.chessboard_renderer_);
 	}
 
 	@Override
@@ -86,15 +79,20 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 		super.show();
 
 		// Set up data retrieval.
-		new Thread(this.data_retreiver).start();
+		DataManager.setUpBoardDataRetrieval(THREAD_COUNT);
 		
 		// Set up layout manager
-		
 		LayoutManager.setUpLayouts(kApplication.atlas());
+		
+		// Set up rendering 
+		region_of_interest_ = new ROI(ChessViewScreen.kDrawableRegion);
+		this.chessboard_renderer_ = new ChessRenderer(kApplication.atlas(), kApplication.spriteBatch());
 
 		// Set up game tree
 		this.game_path_ = new ArrayDeque<GraphSquare>();
-		this.game_path_.addFirst(kRootNode);
+		Board temp = new Board();
+		temp.setFen(kInitialFen);
+		this.game_path_.addFirst(new ChessGraphSquare(new ChessBoardBitBasic(temp), this.chessboard_renderer_));
 
 		// Set up UI
 		this.background = kApplication.atlas().createSprite("background");
@@ -104,14 +102,16 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 		
 		this.hud = new HUD(background.getX(), background.getY(), kApplication.atlas(), this.textFont);
 		
-		region_of_interest_ = new ROI(ChessViewScreen.kDrawableRegion);
-		
+		// Set up input handling
+		Gdx.input.setInputProcessor(new DualInputGestureDetector(this));
+		// Gdx.input.setInputProcessor(this);
+		/*
 		if(Gdx.app.getType() == ApplicationType.Desktop) {
-			Gdx.input.setInputProcessor(this);
-		} else {
-			Gdx.input.setInputProcessor(new GestureDetector(this));
+			
+		} else {;
 		}
 		
+		*/
 	}
 	
 	@Override
@@ -157,6 +157,7 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 			region_of_interest_.Deconstrain(game_path_.peek().getChildVirtualPosition(game_path_.peek().getChildIndex(previous)));
 			this.hud.popMove();
 		}
+		
 	}
 
 	@Override
@@ -184,11 +185,11 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 	}
 
 
-
+/*
 	@Override
 	public boolean scrolled(int amount) {
-		Vector3 mouse_pos = this.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0));
-		return region_of_interest_.Zoom(mouse_pos.x, mouse_pos.y, amount*25);
+		
+		
 	}
 
 	@Override
@@ -209,9 +210,26 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 		return false;
 	}
 
+	private Vector3[] touchPos = new Vector3[2];
+	private float prevDst2;
+	private Vector3 locus = null;
+	
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
 		Vector3 mousePos = this.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0));
+		
+		if(this.hud.contains(mousePos.x, mousePos.y)) {
+			return this.hud.touchDown(mousePos.x, mousePos.y, button);
+		} else {
+			touchPos[pointer]=  mousePos;
+			if(pointer == 1) {
+				locus = touchPos[0].cpy().lerp(touchPos[1], 0.5f);
+				prevDst2 = touchPos[0].dst(touchPos[1]);
+			}
+		}
+		
+		
+		
 		if(this.hud.touchDown(mousePos.x, mousePos.y, button)) {
 			this.disableDrag = true;
 			return true;
@@ -229,16 +247,32 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 		Vector3 mousePos = this.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0));
 		this.hud.touchUp(mousePos.x, mousePos.y, button);
 		
+		if(locus != null) {
+			locus = null;
+		}
 		disableDrag = false;
 		return true;
 	}
-
+	
 	@Override
 	public boolean touchDragged(int screenX, int screenY, int pointer) {
-		if(!disableDrag) {
-			region_of_interest_.Pan(Gdx.input.getDeltaX(), Gdx.input.getDeltaY());
+
+		Vector3 mousePos = this.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0));
+		System.out.println(mousePos.x + " " + mousePos.y + " " + pointer);
+		
+		if(!disableDrag) {			
+			if(locus == null) {
+				float xDelta = mousePos.x - touchPos[0].x;
+				float yDelta = touchPos[0].y - mousePos.y;
+				touchPos[0] = mousePos;
+			} else {
+				touchPos[pointer] = mousePos;
+				float curDst2 = touchPos[0].dst2(touchPos[1]);
+				region_of_interest_.Zoom(locus.x, locus.y, curDst2 - prevDst2);
+			}
+			return true;
 		}
-		return true;
+		return false;
 	}
 
 	@Override
@@ -247,58 +281,85 @@ public class ChessViewScreen extends AbstractScreen implements GestureListener, 
 		return false;
 	}
 
-	
+	*/
 	
 	
 	// TOUCH SCREEN HANDLERS
 	@Override
 	public boolean touchDown(float x, float y, int pointer, int button) {
+		Vector3 mousePos = this.unproject(new Vector3(x, y, 0));
+		
+		if(this.hud.contains(mousePos.x, mousePos.y)) {
+			this.disableDrag = true;
+			return this.hud.touchDown(mousePos.x, mousePos.y, button);
+		}
+		
+		
+		
 		return false;
 	}
 
 	@Override
 	public boolean tap(float x, float y, int count, int button) {
-		// TODO Auto-generated method stub
+		
+		Vector3 mousePos = this.unproject(new Vector3(x, y, 0));
+		if(this.game_path_.peek().touchDown(mousePos.x, mousePos.y, button, this.region_of_interest_)) {
+			// other handlers
+			return true;
+		}
 		return false;
 	}
 
 	@Override
 	public boolean longPress(float x, float y) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public boolean fling(float velocityX, float velocityY, int button) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public boolean pan(float x, float y, float deltaX, float deltaY) {
-		// TODO Auto-generated method stub
-		return false;
+		if(!this.disableDrag) {
+			region_of_interest_.Pan(deltaX, deltaY);
+		}
+		return true;
 	}
 
 	@Override
 	public boolean panStop(float x, float y, int pointer, int button) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
-	public boolean zoom(float initialDistance, float distance) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean zoom(Vector2 screenLocus, float amount) {
+		if(this.disableDrag) {
+			return false;
+		}
+		Vector3 locus = this.unproject(new Vector3(screenLocus.x, screenLocus.y, 0));
+		return region_of_interest_.Zoom(locus.x, locus.y, amount*0.5f);
+	}
+
+
+	@Override
+	public boolean touchUp(int pointer) {
+		if(pointer == 0) {
+		this.hud.touchUp();
+		disableDrag = false;
+		}
+		return true;
 	}
 
 	@Override
-	public boolean pinch(Vector2 initialPointer1, Vector2 initialPointer2,
-			Vector2 pointer1, Vector2 pointer2) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean scrolled(int amount) {
+		if(this.disableDrag) {
+			return false;
+		}
+		Vector3 mouse_pos = this.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0));
+		return region_of_interest_.Zoom(mouse_pos.x, mouse_pos.y, amount*25);
 	}
 
-	
 
 }

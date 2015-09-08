@@ -19,7 +19,7 @@ public class ChessBoardBitBasic extends DrawableChessBoard{
 	
 	public long[] castlingRooks = {0,0,0,0};
 	
-	int move = 0;
+	public int move = 0;
 	
 	public ChessBoardBitBasic(Board copy) {
 		whites = copy.whites;
@@ -44,6 +44,15 @@ public class ChessBoardBitBasic extends DrawableChessBoard{
 						((bishops & square) != 0 ? Piece.BISHOP : //
 								((rooks & square) != 0 ? Piece.ROOK : //
 										((queens & square) != 0 ? Piece.QUEEN : Piece.KING)))));
+	}
+	
+	public boolean hasPieceAt(long square) {
+		return ((pawns & square) != 0 || //
+					(knights & square) != 0 ||
+						(bishops & square) != 0 ||
+							(rooks & square) != 0 ||
+								(queens & square) != 0 ||
+									(kings & square) != 0);
 	}
 
 	@Override
